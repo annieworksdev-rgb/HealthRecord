@@ -1,0 +1,15 @@
+# .easignore の推奨内容
+node_modules/
+.expo/
+android/
+ios/
+.git/
+.vscode/
+
+# EAS/npm のキャッシュを追加
+npm-cache/
+.npm/
+
+# iOS/Android ビルドキャッシュ
+**/build/
+**/.gradle/

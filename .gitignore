@@ -1,0 +1,12 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.idea/
+.vscode/
+*.jks
+*.keystore
+*.aab
+*.apk
+android/
+ios/
