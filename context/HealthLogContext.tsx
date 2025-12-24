@@ -1,4 +1,3 @@
-// context/HealthLogContext.tsx (修正版)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {
   createContext,

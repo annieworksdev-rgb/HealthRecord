@@ -61,12 +61,8 @@ export default function HealthLogScreen() {
   
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const { isPro, toggleProStatusDebug } = usePurchase();
-
   const headerTitle = id ? '記録を編集' : '体調の記録';
-
-  // ★ 広告フックを追加
-  // テスト中は TestIds.INTERSTITIAL (Googleのテスト用ID) を使う
-  const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-あなたの本番ID/xxxxxxxx';
+  const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-2778397933697000/8444782364';
   
   const { isLoaded, isClosed, load, show } = useInterstitialAd(adUnitId, {
     requestNonPersonalizedAdsOnly: true,
@@ -93,11 +89,9 @@ export default function HealthLogScreen() {
     }
   }, [id, logs, navigation]);
 
-  // ★修正: 指定された日時を使って天気を取得する関数
   const fetchWeatherForSelectedTime = async () => {
     if (weatherSetting !== 'on') return;
 
-    // 現在選択されている日付と時刻を結合してターゲット日時を作成
     const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
     const targetTimestamp = Math.floor(targetDate.getTime() / 1000);
     
@@ -114,9 +108,6 @@ export default function HealthLogScreen() {
       if (!location) location = { coords: { latitude: 35.681236, longitude: 139.767125 } } as any;
 
       const { latitude, longitude } = location!.coords;
-      
-      // 基準となる時刻(targetTimestamp)を中心に、前後6時間のデータを取得
-      // すべて timemachine (dt指定) で取得することで、過去の日付でも正確に取れるようにする
       
       const baseUrl = `https://api.openweathermap.org/data/3.0/onecall/timemachine?lat=${latitude}&lon=${longitude}&appid=${API_KEY}&units=metric&lang=ja`;
 
@@ -168,13 +159,10 @@ export default function HealthLogScreen() {
     }
   };
 
-  // ★修正: 新規作成時のみ、初期ロードとして一度だけ天気を取得
   useEffect(() => {
     if (!id && weatherSetting === 'on') {
       fetchWeatherForSelectedTime();
     }
-    // 依存配列を [] に近い形（idが変わった時だけ）にして、勝手な再取得を防ぐ
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, weatherSetting]);
 
   const toggleSymptom = (symptom: string) => {
@@ -206,12 +194,12 @@ export default function HealthLogScreen() {
       if (alarmId) await completeAlarm(alarmId);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({ type: 'success', text1: '保存しました', position: 'bottom', visibilityTime: 2000 });
-      // ★ 広告表示ロジック
+      // 広告表示ロジック
       // 天気ON かつ 新規作成 かつ 無料ユーザー かつ 広告読込完了なら表示
       if (weatherSetting === 'on' && !id && !isPro && !IS_SCREENSHOT_MODE && isLoaded) {
         show(); // ドーンと表示
       } else {
-        router.back(); // 広告が出せなければそのまま戻る
+        router.back();
       }
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -265,14 +253,14 @@ export default function HealthLogScreen() {
     </View>
   );
 
-  // ★ 画面を開いた時に読み込み開始（無料ユーザーのみ）
+  // 画面を開いた時に読み込み開始（無料ユーザーのみ）
   useEffect(() => {
     if (!isPro) {
       load();
     }
   }, [load, isPro]);
 
-  // ★ 広告を閉じたら前の画面に戻る
+  // 広告を閉じたら前の画面に戻る
   useEffect(() => {
     if (isClosed) {
       router.back();
@@ -303,7 +291,6 @@ export default function HealthLogScreen() {
 
             {weatherSetting === 'on' && (
               <View style={styles.weatherContainer}>
-                {/* ★修正: ヘッダー部分に更新ボタンを追加 */}
                 <View style={{ 
                   flexDirection: 'row', 
                   justifyContent: 'space-between', 
@@ -406,9 +393,15 @@ export default function HealthLogScreen() {
           </ScrollView>
 
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={{ alignItems: 'center', marginVertical: 10 }}>
+            <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
               <BannerAd
-                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-あなたの本番ID/xxxxxxxx'}
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
                 size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
                 requestOptions={{
                   requestNonPersonalizedAdsOnly: true,

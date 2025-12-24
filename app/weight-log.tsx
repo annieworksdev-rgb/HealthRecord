@@ -1,10 +1,10 @@
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons'; // ★追加
-import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router'; // ★Stack追加
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ★追加
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { DateSelectRow, SaveArea, TimeSelectRow } from '../components/LogScreenParts';
 import { useAlarms } from '../context/AlarmContext';
@@ -14,9 +14,15 @@ import { formatTime, MAX_WEIGHT, WEIGHT_RANGE } from '../utils/shared';
 import { useRef } from 'react';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 export default function WeightLogScreen() {
-  const insets = useSafeAreaInsets(); // ★追加
+  const insets = useSafeAreaInsets();
   const { id, fromReservation, prefillNotes, alarmId } = useLocalSearchParams<{ id: string; fromReservation?: string; prefillNotes?: string; alarmId?: string }>();
   const { weightLogs, addWeightLog, updateWeightLog } = useMeasurementLogs();
   const { addAlarm, snoozeAlarm, skipAlarm, completeAlarm, alarms, autoSnoozeAlarm } = useAlarms();
@@ -43,7 +49,6 @@ export default function WeightLogScreen() {
         setTime(targetLog.time);
         setWeight(targetLog.weight);
         setNotes(targetLog.notes || '');
-        // navigation.setOptions({ title: '記録を編集' }); // ★削除
       }
     } else {
       const sortedLogs = [...weightLogs].sort((a, b) => b.time.getTime() - a.time.getTime());
@@ -206,8 +211,20 @@ export default function WeightLogScreen() {
           </ScrollView>
 
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={commonStyles.adContainer}>
-              <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
+            <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
             </View>
           )}
         </View>

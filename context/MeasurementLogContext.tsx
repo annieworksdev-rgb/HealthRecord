@@ -77,7 +77,6 @@ type MeasurementLogContextType = {
   deleteBloodSugarLog: (id: string) => Promise<void>;
   deleteTemperatureLog: (id: string) => Promise<void>;
 
-  // ★★★ 追加: 4種類まとめて復元するための関数定義 ★★★
   restoreMeasurements: (data: {
     bloodPressureLogs?: BloodPressureLog[];
     weightLogs?: WeightLog[];
@@ -315,7 +314,7 @@ export function MeasurementLogProvider({ children }: { children: ReactNode }) {
     setTemperatureLogs((prev) => prev.filter((log) => log.id !== id));
   };
 
-  // ★★★ 追加: 復元用関数（ここから） ★★★
+  // 復元用関数
   const restoreMeasurements = async (data: {
     bloodPressureLogs?: BloodPressureLog[];
     weightLogs?: WeightLog[];
@@ -405,7 +404,6 @@ export function MeasurementLogProvider({ children }: { children: ReactNode }) {
       return false;
     }
   };
-  // ★★★ 追加: 復元用関数（ここまで） ★★★
 
   return (
     <MeasurementLogContext.Provider
@@ -426,7 +424,7 @@ export function MeasurementLogProvider({ children }: { children: ReactNode }) {
         addTemperatureLog,
         updateTemperatureLog,
         deleteTemperatureLog,
-        restoreMeasurements, // ★★★ 追加: 最後にこれを渡す
+        restoreMeasurements,
       }}
     >
       {children}

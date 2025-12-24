@@ -1,8 +1,8 @@
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Ionicons } from '@expo/vector-icons'; // ★追加
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router'; // ★Stack追加
-import React, { useEffect, useState } from 'react';
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Alert,
   Modal,
@@ -15,13 +15,21 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ★追加
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
+import { Audio } from 'expo-av';
+
 import { useAlarms } from '../context/AlarmContext';
 import { RepeatPattern, TimeFormat } from '../types/types';
 import { usePurchase } from '../context/PurchaseContext';
 import { commonStyles } from '../styles/common';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 const DAYS_OF_WEEK = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -32,6 +40,14 @@ const SOUND_OPTIONS: Record<string, string> = {
   decision: '決定音',
   shrine: '神社',
   wind_chime: '風鈴',
+};
+
+const SOUND_FILES: Record<string, any> = {
+  bell: require('../assets/sounds/bell.mp3'),
+  correct_answer: require('../assets/sounds/correct_answer.mp3'),
+  decision: require('../assets/sounds/decision.mp3'),
+  shrine: require('../assets/sounds/shrine.mp3'),
+  wind_chime: require('../assets/sounds/wind_chime.mp3'),
 };
 
 const REPEAT_LABELS: Record<RepeatPattern, string> = {
@@ -59,7 +75,7 @@ const formatDate = (date: Date) => {
 };
 
 export default function ReservationSettingsScreen() {
-  const insets = useSafeAreaInsets(); // ★追加
+  const insets = useSafeAreaInsets();
   const { label, id } = useLocalSearchParams<{ label: string; id: string }>();
   const { alarms, addAlarm, updateAlarm, deleteAlarm, timeFormat } = useAlarms();
   const navigation = useNavigation();
@@ -75,6 +91,7 @@ export default function ReservationSettingsScreen() {
 
   const [selectedSound, setSelectedSound] = useState('default');
   const [showSoundModal, setShowSoundModal] = useState(false);
+  const soundObject = useRef<Audio.Sound | null>(null);
 
   const [pickerMode, setPickerMode] = useState<'date' | 'time' | null>(null);
 
@@ -109,11 +126,41 @@ export default function ReservationSettingsScreen() {
         setMedAmount(targetAlarm.medicationAmount || '');
         setMedUnit(targetAlarm.medicationUnit || '錠剤');
         setSelectedSound(targetAlarm.soundKey || 'default');
-
-        // navigation.setOptions({ title: '予約を編集' }); // ★削除
       }
     }
   }, [id, alarms, navigation]);
+
+  useEffect(() => {
+    return () => {
+      if (soundObject.current) {
+        soundObject.current.unloadAsync();
+      }
+    };
+  }, []);
+
+  // プレビュー再生関数
+  const playPreviewSound = async (key: string) => {
+    try {
+      // すでに再生中の音があれば止めて解放する
+      if (soundObject.current) {
+        await soundObject.current.unloadAsync();
+        soundObject.current = null;
+      }
+
+      // 「システム標準」の場合は音源ファイルがないので振動だけさせる
+      if (key === 'default' || !SOUND_FILES[key]) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        return;
+      }
+
+      // 新しい音をロードして再生
+      const { sound } = await Audio.Sound.createAsync(SOUND_FILES[key]);
+      soundObject.current = sound;
+      await sound.playAsync();
+    } catch (error) {
+      console.log('Sound preview error:', error);
+    }
+  };
 
   const needsDetail = currentLabel.includes('服薬') || currentLabel.includes('通院');
   const isMedication = currentLabel.includes('服薬');
@@ -362,9 +409,21 @@ export default function ReservationSettingsScreen() {
 
       {/* 3. 広告エリア (ScrollViewの外に出して最下部に固定) */}
       {!isPro && !IS_SCREENSHOT_MODE && (
-        <View style={[commonStyles.adContainer, { marginBottom: Math.max(insets.bottom, 10), marginHorizontal: 16 }]}>
-          <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
-        </View>
+        <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
+            </View>
       )}
 
       <Modal visible={showRepeatModal} transparent={true} animationType="fade" onRequestClose={() => setShowRepeatModal(false)}>
@@ -405,16 +464,19 @@ export default function ReservationSettingsScreen() {
                 style={styles.modalOption}
                 onPress={() => {
                   Haptics.selectionAsync();
-                  setSelectedSound(key);
-                  setShowSoundModal(false);
+                  setSelectedSound(key); // 選択状態を更新
+                  playPreviewSound(key); // 音を再生！
                 }}
               >
-                <Text style={styles.modalOptionText}>{SOUND_OPTIONS[key]}</Text>
+                <Text style={styles.modalOptionText}>
+                  {SOUND_OPTIONS[key]} 
+                  {/* 再生中アイコンなどを出すならここで判定 */}
+                </Text>
                 <View style={styles.radioOuter}>{selectedSound === key && <View style={styles.radioInner} />}</View>
               </TouchableOpacity>
             ))}
             <TouchableOpacity style={styles.modalCancelButton} onPress={() => setShowSoundModal(false)}>
-              <Text style={styles.modalCancelText}>キャンセル</Text>
+              <Text style={styles.modalCancelText}>決定（閉じる）</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

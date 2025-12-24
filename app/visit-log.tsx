@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons'; // ★追加
-import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router'; // ★Stack追加
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -16,7 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ★追加
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { DateSelectRow, SaveArea, TimeSelectRow } from '../components/LogScreenParts';
 import { useAlarms } from '../context/AlarmContext';
@@ -25,9 +25,15 @@ import { commonStyles } from '../styles/common';
 import { formatTime } from '../utils/shared';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 export default function VisitLogScreen() {
-  const insets = useSafeAreaInsets(); // ★追加
+  const insets = useSafeAreaInsets();
   const { id, prefillHospitalName, alarmId } = useLocalSearchParams<{ id: string; prefillHospitalName?: string; alarmId?: string; }>();
   const { visitLogs, addVisitLog, updateVisitLog } = useHealthLogs();
   const { addAlarm, snoozeAlarm, skipAlarm, completeAlarm, alarms, autoSnoozeAlarm } = useAlarms();
@@ -60,7 +66,6 @@ export default function VisitLogScreen() {
         setHasMedication(targetLog.hasMedication);
         setNotes(targetLog.notes || '');
         setImageUris(targetLog.imageUris || []);
-        // navigation.setOptions({ title: '記録を編集' }); // ★削除
       }
     } else {
       if (prefillHospitalName) setHospitalName(prefillHospitalName);
@@ -253,8 +258,20 @@ export default function VisitLogScreen() {
           </ScrollView>
           
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={commonStyles.adContainer}>
-              <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
+            <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
             </View>
           )}
         </View>

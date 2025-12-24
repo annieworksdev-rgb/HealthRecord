@@ -18,7 +18,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAlarms } from '../context/AlarmContext';
 import { TimeFormat, WeatherSetting } from '../types/types';
-// ★追加: 課金フックをインポート
 import { usePurchase } from '../context/PurchaseContext';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -37,10 +36,10 @@ export default function ModalSettingsScreen() {
   const insets = useSafeAreaInsets();
   const { timeFormat, setTimeFormat, weatherSetting, setWeatherSetting } = useAlarms();
   
-  // ★課金状態と関数を取得
+  // 課金状態と関数を取得
   const { isPro, packages, purchase, restore, isLoading, toggleProStatusDebug } = usePurchase();
 
-  // ★設定対象を管理 ('time' | 'weather' | 'purchase')
+  // 設定対象を管理 ('time' | 'weather' | 'purchase')
   const [activeSetting, setActiveSetting] = useState<'time' | 'weather' | 'purchase' | null>(null);
 
   const renderOptions = () => {
@@ -82,7 +81,7 @@ export default function ModalSettingsScreen() {
     return null;
   };
 
-  // ★課金モーダルのレンダリング
+  // 課金モーダルのレンダリング
   const renderPurchaseModal = () => {
     return (
       <View style={styles.modalContent}>
@@ -374,7 +373,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  // ★追加スタイル
   featureItem: {
     fontSize: 14,
     color: '#333',
@@ -395,13 +393,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 15,
     fontWeight: 'bold',
-    flex: 1,       // ★追加: これで幅からはみ出さずに改行されます
-    marginRight: 8 // ★追加: 金額との間に少し隙間を作ります
+    flex: 1, 
+    marginRight: 8 
   },
   purchaseButtonPrice: {
     color: 'white',
     fontSize: 15,
     fontWeight: 'bold',
-    // flexShrink: 0, // 必要なら追加（金額が絶対に改行されないようにする）
   }
 });

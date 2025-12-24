@@ -112,8 +112,9 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
 
       const targetId = data.id || notificationId;
       
-      // 通知を消す
-      await Notifications.dismissNotificationAsync(notificationId);
+      if (notificationId) {
+        await Notifications.dismissNotificationAsync(notificationId).catch(() => {});
+      }
 
       const target = getTargetScreen(data.title);
 
@@ -189,6 +190,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
       const lastResponse = await Notifications.getLastNotificationResponseAsync();
       if (lastResponse) {
         console.log('コールドスタート検知: 通知から起動しました');
+        // 少し待ってから処理（ナビゲーション準備のため）
         setTimeout(() => handleNotificationResponse(lastResponse), 500);
       }
     })();
@@ -407,9 +409,11 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     setAlarms((prev) => {
       const target = prev.find((a) => a.id === id || a.notificationId === id);
       if (target) {
-        Notifications.cancelScheduledNotificationAsync(
-          target.notificationId,
-        ).catch(() => {});
+        if (target.notificationId) {
+          Notifications.cancelScheduledNotificationAsync(
+            target.notificationId,
+          ).catch(() => {});
+        }
         return prev.filter((a) => a.id !== target.id);
       }
       return prev;
@@ -525,7 +529,6 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
         }
       : undefined;
 
-    // ★修正: 元のアラーム音設定を引き継ぐ
     await addAlarm(snoozeTime, title, detail, 'none', undefined, medData, target?.soundKey);
   };
 
@@ -551,7 +554,6 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
         }
       : undefined;
 
-    // ★修正: 元のアラーム音設定を引き継ぐ
     await updateAlarm(
       id,
       newTime,

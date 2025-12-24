@@ -28,18 +28,8 @@ export default function RootLayout() {
                 <Stack.Screen name="blood-sugar-log" options={{ presentation: 'modal', title: '血糖値記録' }} />
                 <Stack.Screen name="temperature-log" options={{ presentation: 'modal', title: '体温記録' }} />
                 <Stack.Screen name="reservation-settings" options={{ presentation: 'modal', title: '予約設定' }} />
-
                 <Stack.Screen name="graph" options={{ presentation: 'modal', title: '体調グラフ' }} />
-
                 <Stack.Screen name="modal" options={{ presentation: 'modal', title: '設定' }} />
-                <Stack.Screen 
-                  name="ad-interstitial" 
-                  options={{ 
-                    headerShown: false,
-                    presentation: 'fullScreenModal',
-                    gestureEnabled: false,
-                  }} 
-                />
               </Stack>
               <Toast />
             </MeasurementLogProvider>

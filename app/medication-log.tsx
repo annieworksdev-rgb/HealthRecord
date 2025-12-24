@@ -13,9 +13,15 @@ import { formatTime, UNIT_OPTIONS } from '../utils/shared';
 import { useRef } from 'react';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 export default function MedicationLogScreen() {
-  const insets = useSafeAreaInsets(); // ★追加
+  const insets = useSafeAreaInsets();
   const { id, prefillName, prefillAmount, prefillUnit, fromReservation, alarmId } = useLocalSearchParams<{ 
       id?: string;
       prefillName?: string;
@@ -52,7 +58,6 @@ export default function MedicationLogScreen() {
         setAmount(targetLog.amount);
         setUnit(targetLog.unit);
         setNotes(targetLog.notes || '');
-        // navigation.setOptions({ title: '記録を編集' }); // ★削除
       }
     } else {
         if (prefillName) setDrugName(prefillName);
@@ -191,8 +196,20 @@ export default function MedicationLogScreen() {
 
           {/* 広告エリア */}
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={commonStyles.adContainer}>
-              <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
+            <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
             </View>
           )}
         </View>

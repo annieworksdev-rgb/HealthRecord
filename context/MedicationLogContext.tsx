@@ -40,7 +40,7 @@ export function MedicationLogProvider({ children }: { children: ReactNode }) {
           const parsedLogs: MedicationLog[] = JSON.parse(storedLogs).map(
             (log: any) => ({
               ...log,
-              time: new Date(log.time), // Dateオブジェクトに復元
+              time: new Date(log.time),
             }),
           );
           setMedicationLogs(parsedLogs);
@@ -100,7 +100,7 @@ export function MedicationLogProvider({ children }: { children: ReactNode }) {
     setMedicationLogs((currentLogs) =>
       currentLogs.map((log) =>
         log.id === id
-          ? { ...log, time, name, amount, unit, notes } // IDが一致したら中身を更新
+          ? { ...log, time, name, amount, unit, notes }
           : log
       )
     );

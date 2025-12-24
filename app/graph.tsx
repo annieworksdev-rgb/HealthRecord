@@ -11,6 +11,12 @@ import { useMeasurementLogs } from '../context/MeasurementLogContext';
 import { getDateKey } from '../utils/shared';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -25,7 +31,7 @@ export default function GraphScreen() {
   const [selectedType, setSelectedType] = useState<GraphType>('condition');
   const { isPro, toggleProStatusDebug } = usePurchase();
 
-  // --- データ加工処理 (そのまま) ---
+  // --- データ加工処理 ---
   const { 
     bpDataSystolic, bpDataDiastolic, pulseData, 
     weightData, weightYAxisOffset,
@@ -54,7 +60,7 @@ export default function GraphScreen() {
     // 0. 体調
     const sortedLogs = [...logs]
       .sort((a, b) => a.time.getTime() - b.time.getTime())
-      .filter(filterByDate) // ★フィルタ適用
+      .filter(filterByDate)
       .slice(-30);
     const condPoints: DataPoint[] = [];
     sortedLogs.forEach((log) => {
@@ -67,7 +73,7 @@ export default function GraphScreen() {
     // 1. 血圧・脈拍
     const sortedBpLogs = [...bloodPressureLogs]
       .sort((a, b) => a.time.getTime() - b.time.getTime())
-      .filter(filterByDate) // ★フィルタ適用
+      .filter(filterByDate)
       .slice(-30);
     const systolicPoints: DataPoint[] = [];
     const diastolicPoints: DataPoint[] = [];
@@ -86,7 +92,7 @@ export default function GraphScreen() {
     // 2. 体重
     const sortedWeightLogs = [...weightLogs]
       .sort((a, b) => a.time.getTime() - b.time.getTime())
-      .filter(filterByDate) // ★フィルタ適用
+      .filter(filterByDate)
       .slice(-30);
     const weightPoints: DataPoint[] = [];
     let minWeight = 1000; 
@@ -104,7 +110,7 @@ export default function GraphScreen() {
     const sugarMap: { [dateKey: string]: { before?: number; after?: number; dateLabel: string } } = {};
     const sortedSugarLogs = [...bloodSugarLogs]
       .sort((a, b) => a.time.getTime() - b.time.getTime())
-      .filter(filterByDate); // ★フィルタ適用
+      .filter(filterByDate);
     let maxSugarVal = 0;
     sortedSugarLogs.forEach((log) => {
       const key = getDateKey(log.time);
@@ -131,7 +137,7 @@ export default function GraphScreen() {
     // 4. 体温
     const sortedTempLogs = [...temperatureLogs]
       .sort((a, b) => a.time.getTime() - b.time.getTime())
-      .filter(filterByDate) // ★フィルタ適用
+      .filter(filterByDate)
       .slice(-30);
     const tempPoints: DataPoint[] = [];
     let minTemp = 100; 
@@ -169,7 +175,6 @@ export default function GraphScreen() {
   );
 
   const renderContent = () => {
-    // グラフのレンダリング部分は変更なし（長いので省略せず記述）
     if (selectedType === 'condition') {
       if (conditionData.length === 0) return <EmptyView />;
       return (
@@ -273,9 +278,6 @@ export default function GraphScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ★修正: Stack.Screenは「非表示」にし、自作の安全なヘッダーを使います。
-        これでどんなAndroid端末でも、カメラの穴と重なることは物理的にありえません。
-      */}
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.safeHeader, { paddingTop: insets.top }]}>
@@ -324,27 +326,40 @@ export default function GraphScreen() {
         )}
 
         {!isPro && !IS_SCREENSHOT_MODE && (
-          <View style={styles.adContainer}>
-            <View style={styles.adContent}>
-              <Ionicons name="play-circle-outline" size={40} color="#fff" />
-              <Text style={styles.adText}>広告 (動画)</Text>
-              <Text style={styles.adSubText}>ここにおすすめ動画が表示されます</Text>
-            </View>
-            <Text style={styles.adLabel}>PR</Text>
+          <View style={{ alignItems: 'center', marginVertical: 20 }}>
+             {/* 余白を開けてバナーを配置 */}
+             <BannerAd
+               unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/2648055425'}
+               size={BannerAdSize.MEDIUM_RECTANGLE}
+               requestOptions={{
+                 requestNonPersonalizedAdsOnly: true,
+               }}
+             />
           </View>
         )}
       </ScrollView>
 
       {!isPro && !IS_SCREENSHOT_MODE && (
-        <View style={[styles.fixedAdContainer, { paddingBottom: Math.max(insets.bottom, 10), height: 'auto' }]}>
-          <View style={{ height: 60, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-            <Text style={styles.fixedAdText}>広告バナー領域 (固定)</Text>
-            <Text style={styles.fixedAdLabel}>AD</Text>
-          </View>
+        <View style={{ 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            width: '100%',
+            backgroundColor: '#fff',
+            borderTopWidth: 1,
+            borderTopColor: '#eee',
+            paddingBottom: Math.max(insets.bottom, 0)
+        }}>
+          <BannerAd
+            unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: true,
+            }}
+          />
         </View>
       )}
 
-      {/* メニューモーダル (Indexと統一) */}
+      {/* メニューモーダル */}
       <Modal
         visible={isMenuModalVisible}
         transparent={true}
@@ -362,10 +377,8 @@ export default function GraphScreen() {
               style={styles.optionButton}
               onPress={() => {
                 setIsMenuModalVisible(false);
-                // ★修正: push ではなく navigate を使用
-                // これにより「新しい画面」を作らずに「元の画面」に戻ってパラメータだけ渡します
                 if (router.canDismiss()) {
-                  router.dismissAll(); // スタックをクリアしてIndexに戻る
+                  router.dismissAll();
                 }
                 router.replace({ pathname: '/', params: { mode: 'daily' } });
               }}
@@ -378,7 +391,6 @@ export default function GraphScreen() {
               style={styles.optionButton}
               onPress={() => {
                 setIsMenuModalVisible(false);
-                // ★修正: ここも同様
                 if (router.canDismiss()) {
                   router.dismissAll();
                 }
@@ -390,8 +402,8 @@ export default function GraphScreen() {
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={styles.optionButton} // ★ここを元の optionButton に戻す！
-              onPress={() => setIsMenuModalVisible(false)} // デバッグ機能は消してOK
+              style={styles.optionButton}
+              onPress={() => setIsMenuModalVisible(false)}
             >
                <MaterialCommunityIcons name="chart-timeline-variant" size={24} color="#007AFF" style={{ marginRight: 10 }} />
                <Text style={[styles.optionText, { fontWeight: 'bold', color: '#007AFF' }]}>体調グラフ</Text>
@@ -426,9 +438,9 @@ const styles = StyleSheet.create({
     height: '100%', 
     justifyContent: 'center', 
     alignItems: 'center',
-    zIndex: 1, // ボタンより前に来るように念のため
+    zIndex: 1,
   },
-  // ★安全な自作ヘッダー
+  // 安全な自作ヘッダー
   safeHeader: {
     backgroundColor: '#F2F4F7', 
     width: '100%',
@@ -451,10 +463,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
-    //position: 'absolute',
-    // ★修正: zIndexを削除し、左右に余白を設定
-    //left: 50, 
-    //right: 50,
   },
 
   tabContainer: { backgroundColor: '#fff', paddingTop: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },

@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons'; // ★追加
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router'; // ★Stack追加
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Button, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
@@ -13,9 +13,15 @@ import { commonStyles, pickerSelectStyles } from '../styles/common';
 import { formatTime, TEMP_MAX, TEMP_MIN, TEMP_OPTIONS } from '../utils/shared';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 export default function TemperatureLogScreen() {
-  const insets = useSafeAreaInsets(); // ★追加
+  const insets = useSafeAreaInsets();
   const { id, fromReservation, prefillNotes, alarmId } = useLocalSearchParams<{ id: string; fromReservation?: string; prefillNotes?: string; alarmId?: string }>();
   const { temperatureLogs, addTemperatureLog, updateTemperatureLog } = useMeasurementLogs();
   const { addAlarm, snoozeAlarm, skipAlarm, completeAlarm, alarms, autoSnoozeAlarm } = useAlarms();
@@ -43,7 +49,6 @@ export default function TemperatureLogScreen() {
         setTime(targetLog.time);
         setValue(targetLog.value);
         setNotes(targetLog.notes || '');
-        // navigation.setOptions({ title: '記録を編集' }); // ★削除 (自作ヘッダーを使うため)
       }
     } else {
       const sortedLogs = [...temperatureLogs].sort((a, b) => b.time.getTime() - a.time.getTime());
@@ -140,7 +145,6 @@ export default function TemperatureLogScreen() {
   const isDisabled = !value.trim();
 
   return (
-    // ★SafeAreaViewをやめて通常のViewにし、自作ヘッダーを配置
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <Stack.Screen options={{ headerShown: false }} />
       
@@ -191,8 +195,20 @@ export default function TemperatureLogScreen() {
           </ScrollView>
 
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={commonStyles.adContainer}>
-              <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
+            <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
             </View>
           )}
         </View>

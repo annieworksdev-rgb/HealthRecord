@@ -14,9 +14,15 @@ import { BS_OPTIONS, BS_RANGE, formatTime, MAX_BS, TIMING_OPTIONS } from '../uti
 import { useRef } from 'react';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 export default function BloodSugarLogScreen() {
-  const insets = useSafeAreaInsets(); // ★追加
+  const insets = useSafeAreaInsets();
   const { id, fromReservation, prefillNotes, alarmId } = useLocalSearchParams<{ id: string; fromReservation?: string; prefillNotes?: string; alarmId?: string }>();
   const { bloodSugarLogs, addBloodSugarLog, updateBloodSugarLog } = useMeasurementLogs();
   const { addAlarm, snoozeAlarm, skipAlarm, completeAlarm, alarms, autoSnoozeAlarm } = useAlarms();
@@ -45,7 +51,6 @@ export default function BloodSugarLogScreen() {
         setValue(targetLog.value);
         setTiming(targetLog.timing);
         setNotes(targetLog.notes || '');
-        // navigation.setOptions({ title: '記録を編集' }); // ★削除
       }
     } else {
       const sortedLogs = [...bloodSugarLogs].sort((a, b) => b.time.getTime() - a.time.getTime());
@@ -199,8 +204,20 @@ export default function BloodSugarLogScreen() {
 
           {/* 広告エリア */}
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={commonStyles.adContainer}>
-              <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
+            <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
             </View>
           )}
         </View>

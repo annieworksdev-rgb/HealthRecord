@@ -14,9 +14,15 @@ import { BLOOD_PRESSURE_OPTIONS, formatTime, HEART_RATE_OPTIONS } from '../utils
 import { useRef } from 'react';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 export default function BloodPressureLogScreen() {
-  const insets = useSafeAreaInsets(); // ★追加
+  const insets = useSafeAreaInsets();
   const { id, fromReservation, prefillNotes, alarmId } = useLocalSearchParams<{ id: string; fromReservation?: string; prefillNotes?: string; alarmId?: string }>();
   const { bloodPressureLogs, addBloodPressureLog, updateBloodPressureLog } = useMeasurementLogs();
   const { addAlarm, snoozeAlarm, skipAlarm, completeAlarm, alarms, autoSnoozeAlarm } = useAlarms();
@@ -52,7 +58,6 @@ export default function BloodPressureLogScreen() {
         setNotes(targetLog.notes || '');
         if (!targetLog.systolic && !targetLog.diastolic) setSkipBloodPressure(true);
         if (!targetLog.restingHeartRate) setSkipHeartRate(true);
-        // navigation.setOptions({ title: '記録を編集' }); // ★削除
       }
     } else {
       const sortedLogs = [...bloodPressureLogs].sort((a, b) => b.time.getTime() - a.time.getTime());
@@ -245,8 +250,20 @@ export default function BloodPressureLogScreen() {
 
           {/* 広告エリア */}
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={commonStyles.adContainer}>
-              <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
+            <View style={{ 
+              alignItems: 'center', 
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: '#fff',
+              width: '100%'
+            }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
             </View>
           )}
         </View>

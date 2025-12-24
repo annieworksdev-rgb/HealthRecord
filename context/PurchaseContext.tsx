@@ -11,7 +11,7 @@ type PurchaseContextType = {
   purchase: (pack: PurchasesPackage) => Promise<void>; 
   restore: () => Promise<void>; 
   isLoading: boolean;
-  toggleProStatusDebug: () => void; // ★ これが必要です
+  toggleProStatusDebug: () => void;
 };
 
 const PurchaseContext = createContext<PurchaseContextType | undefined>(undefined);
@@ -19,13 +19,13 @@ const PurchaseContext = createContext<PurchaseContextType | undefined>(undefined
 export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // 本来の課金状態（RevenueCatから取得）
   const [originalIsPro, setOriginalIsPro] = useState(false);
-  // ★ 強制的に無料モードにするフラグ
+  // 強制的に無料モードにするフラグ
   const [isForceFreeMode, setIsForceFreeMode] = useState(false);
 
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ★ 外部に公開する「isPro」は、強制モードがONなら嘘（false）をつく
+  // 外部に公開する「isPro」は、強制モードがONなら嘘（false）をつく
   const isPro = isForceFreeMode ? false : originalIsPro;
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateProStatus = (info: CustomerInfo) => {
     const isActive = info.entitlements.active['pro'] !== undefined;
-    setOriginalIsPro(isActive); // ★ 本来の状態として保存
+    setOriginalIsPro(isActive); 
   };
 
   const purchase = async (pack: PurchasesPackage) => {
@@ -80,7 +80,7 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // ★ 強制無料モードの切り替えスイッチ
+  // 強制無料モードの切り替えスイッチ
   const toggleProStatusDebug = () => {
     setIsForceFreeMode(prev => !prev);
   };

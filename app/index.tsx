@@ -50,6 +50,7 @@ import {
 import { getDateKey, isSameDay, WEEKS } from '../utils/shared';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 // --- 日付ごとのページコンポーネント (変更なし) ---
 type RecordWithSort = (
@@ -121,8 +122,6 @@ const DatePage = React.memo(
             <Text style={{ marginTop: 4, color: '#aaa', fontSize: 12 }}>
               プレミアムプランで閲覧可能
             </Text>
-            
-            {/* ここに「詳しく見る」ボタンなどを置いて、課金モーダルへ誘導 */}
           </View>
         </View>
       );
@@ -363,13 +362,16 @@ export default function RecordListScreen() {
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}>
             <View style={styles.calGrid}>{days}</View>
             {!isPro && !IS_SCREENSHOT_MODE && (
-              <View style={[styles.adContainer, styles.cardEffect]}>
-                <View style={styles.adContent}>
-                  <Ionicons name="play-circle-outline" size={40} color="#fff" />
-                  <Text style={styles.adText}>広告 (動画)</Text>
-                  <Text style={styles.adSubText}>ここにおすすめ動画が表示されます</Text>
+              <View style={[styles.fixedAdContainer, { paddingBottom: Math.max(insets.bottom, 0), backgroundColor: '#fff' }]}>
+                <View style={{ alignItems: 'center', width: '100%' }}>
+                  <BannerAd
+                    unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/6848629668'}
+                    size={BannerAdSize.MEDIUM_RECTANGLE}
+                    requestOptions={{
+                      requestNonPersonalizedAdsOnly: true,
+                    }}
+                  />
                 </View>
-                <Text style={styles.adLabel}>PR</Text>
               </View>
             )}
           </ScrollView>
@@ -379,10 +381,6 @@ export default function RecordListScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ★ 修正ポイント: 
-        Stack.Screenの標準ヘッダーを無効にし、自作の安全ヘッダーを使用。
-        paddingTopにinsets.topを指定することで、確実にステータスバーを避けます。
-      */}
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={[styles.safeHeader, { paddingTop: insets.top }]}>
@@ -458,11 +456,22 @@ export default function RecordListScreen() {
       </TouchableOpacity>
 
       {!isPro && !IS_SCREENSHOT_MODE && (
-        <View style={[styles.fixedAdContainer, { paddingBottom: Math.max(insets.bottom, 10), height: 'auto' }]}>
-          <View style={{ height: 60, justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-            <Text style={styles.fixedAdText}>広告バナー領域 (固定)</Text>
-            <Text style={styles.fixedAdLabel}>AD</Text>
-          </View>
+        <View style={{ 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            width: '100%',
+            backgroundColor: '#fff',
+            paddingBottom: Math.max(insets.bottom, 0),
+            borderTopWidth: 1,
+            borderTopColor: '#eee'
+        }}>
+          <BannerAd
+            unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-2778397933697000/3087039123'}
+            size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+            requestOptions={{
+              requestNonPersonalizedAdsOnly: true,
+            }}
+          />
         </View>
       )}
 
@@ -582,7 +591,7 @@ const styles = StyleSheet.create({
     zIndex: 1, // ボタンより前に来るように念のため
   },
   
-  // ★安全な自作ヘッダー
+  // 自作ヘッダー
   safeHeader: {
     backgroundColor: '#F2F4F7', 
     width: '100%',
@@ -611,10 +620,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
-    //position: 'absolute',
-    // ★修正: zIndexを削除し、左右に余白を設定
-    //left: 50, 
-    //right: 50, 
   },
   // -------------------------
 
