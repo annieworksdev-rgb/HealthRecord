@@ -1,28 +1,32 @@
-// app/context/PurchaseContext.tsx
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import Purchases, { CustomerInfo, PurchasesPackage } from 'react-native-purchases';
 
-// RevenueCatのAPIキー（後で取得して書き換えます。今はダミーでOK）
+// RevenueCatのAPIキー
 const API_KEY = 'goog_paKHUmUbbhcSGoBEqKyqUsdIAJv';
 
 type PurchaseContextType = {
-  isPro: boolean;           // 有料会員かどうか
-  packages: PurchasesPackage[]; // 購入可能なプラン一覧
-  purchase: (pack: PurchasesPackage) => Promise<void>; // 購入処理
-  restore: () => Promise<void>; // 復元処理
+  isPro: boolean;           
+  packages: PurchasesPackage[]; 
+  purchase: (pack: PurchasesPackage) => Promise<void>; 
+  restore: () => Promise<void>; 
   isLoading: boolean;
-  // ★開発用：強制的にステータスを切り替える関数
-  toggleProStatusDebug: () => void; 
+  toggleProStatusDebug: () => void; // ★ これが必要です
 };
 
 const PurchaseContext = createContext<PurchaseContextType | undefined>(undefined);
 
 export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isPro, setIsPro] = useState(false);
+  // 本来の課金状態（RevenueCatから取得）
+  const [originalIsPro, setOriginalIsPro] = useState(false);
+  // ★ 強制的に無料モードにするフラグ
+  const [isForceFreeMode, setIsForceFreeMode] = useState(false);
+
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // ★ 外部に公開する「isPro」は、強制モードがONなら嘘（false）をつく
+  const isPro = isForceFreeMode ? false : originalIsPro;
 
   useEffect(() => {
     const init = async () => {
@@ -46,16 +50,14 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const listener = (info: CustomerInfo) => updateProStatus(info);
     Purchases.addCustomerInfoUpdateListener(listener);
     
-    // ★ここを修正しました
     return () => {
       Purchases.removeCustomerInfoUpdateListener(listener);
     };
   }, []);
 
   const updateProStatus = (info: CustomerInfo) => {
-    // Entitlement ID が "pro" になっているか確認
     const isActive = info.entitlements.active['pro'] !== undefined;
-    setIsPro(isActive);
+    setOriginalIsPro(isActive); // ★ 本来の状態として保存
   };
 
   const purchase = async (pack: PurchasesPackage) => {
@@ -78,8 +80,10 @@ export const PurchaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // 開発中の確認用
-  const toggleProStatusDebug = () => setIsPro(prev => !prev);
+  // ★ 強制無料モードの切り替えスイッチ
+  const toggleProStatusDebug = () => {
+    setIsForceFreeMode(prev => !prev);
+  };
 
   return (
     <PurchaseContext.Provider value={{ isPro, packages, purchase, restore, isLoading, toggleProStatusDebug }}>

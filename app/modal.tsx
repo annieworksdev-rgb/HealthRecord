@@ -38,7 +38,7 @@ export default function ModalSettingsScreen() {
   const { timeFormat, setTimeFormat, weatherSetting, setWeatherSetting } = useAlarms();
   
   // ★課金状態と関数を取得
-  const { isPro, packages, purchase, restore, isLoading } = usePurchase();
+  const { isPro, packages, purchase, restore, isLoading, toggleProStatusDebug } = usePurchase();
 
   // ★設定対象を管理 ('time' | 'weather' | 'purchase')
   const [activeSetting, setActiveSetting] = useState<'time' | 'weather' | 'purchase' | null>(null);
@@ -225,6 +225,19 @@ export default function ModalSettingsScreen() {
       </TouchableOpacity>
       
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+        <TouchableOpacity 
+          style={{ marginBottom: 15, padding: 10, backgroundColor: '#eee', borderRadius: 8, alignItems: 'center' }}
+          onPress={() => {
+            Haptics.selectionAsync();
+            toggleProStatusDebug(); // これで強制的に切り替わります
+            Alert.alert('デバッグ', `現在の状態を ${!isPro ? 'プレミアム' : '無料'} に変更しました`);
+          }}
+        >
+          <Text style={{ color: '#555', fontSize: 12 }}>
+             🔧 開発用デバッグ: 課金状態を反転 ({isPro ? 'Pro' : 'Free'})
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.closeButton}
           onPress={() => router.back()}

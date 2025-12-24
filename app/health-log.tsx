@@ -25,6 +25,12 @@ import { WeatherData } from '../types/types';
 import { API_KEY, CONDITION_ICONS, formatTime, SYMPTOMS_GROUPS } from '../utils/shared';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
+import { 
+  BannerAd, 
+  BannerAdSize, 
+  TestIds, 
+  useInterstitialAd 
+} from 'react-native-google-mobile-ads';
 
 export default function HealthLogScreen() {
   const insets = useSafeAreaInsets();
@@ -57,6 +63,14 @@ export default function HealthLogScreen() {
   const { isPro, toggleProStatusDebug } = usePurchase();
 
   const headerTitle = id ? '記録を編集' : '体調の記録';
+
+  // ★ 広告フックを追加
+  // テスト中は TestIds.INTERSTITIAL (Googleのテスト用ID) を使う
+  const adUnitId = __DEV__ ? TestIds.INTERSTITIAL : 'ca-app-pub-あなたの本番ID/xxxxxxxx';
+  
+  const { isLoaded, isClosed, load, show } = useInterstitialAd(adUnitId, {
+    requestNonPersonalizedAdsOnly: true,
+  });
 
   useEffect(() => {
     if (id) {
@@ -192,10 +206,12 @@ export default function HealthLogScreen() {
       if (alarmId) await completeAlarm(alarmId);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({ type: 'success', text1: '保存しました', position: 'bottom', visibilityTime: 2000 });
-      if (weatherSetting === 'on' && !id && !isPro && !IS_SCREENSHOT_MODE) {
-        router.replace('/ad-interstitial');
+      // ★ 広告表示ロジック
+      // 天気ON かつ 新規作成 かつ 無料ユーザー かつ 広告読込完了なら表示
+      if (weatherSetting === 'on' && !id && !isPro && !IS_SCREENSHOT_MODE && isLoaded) {
+        show(); // ドーンと表示
       } else {
-        router.back();
+        router.back(); // 広告が出せなければそのまま戻る
       }
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -248,6 +264,20 @@ export default function HealthLogScreen() {
       )}
     </View>
   );
+
+  // ★ 画面を開いた時に読み込み開始（無料ユーザーのみ）
+  useEffect(() => {
+    if (!isPro) {
+      load();
+    }
+  }, [load, isPro]);
+
+  // ★ 広告を閉じたら前の画面に戻る
+  useEffect(() => {
+    if (isClosed) {
+      router.back();
+    }
+  }, [isClosed]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -376,8 +406,14 @@ export default function HealthLogScreen() {
           </ScrollView>
 
           {!isPro && !IS_SCREENSHOT_MODE && (
-            <View style={commonStyles.adContainer}>
-              <Text style={commonStyles.adPlaceholderText}>広告スペース</Text>
+            <View style={{ alignItems: 'center', marginVertical: 10 }}>
+              <BannerAd
+                unitId={__DEV__ ? TestIds.BANNER : 'ca-app-pub-あなたの本番ID/xxxxxxxx'}
+                size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
+                requestOptions={{
+                  requestNonPersonalizedAdsOnly: true,
+                }}
+              />
             </View>
           )}
         </View>
