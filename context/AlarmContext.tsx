@@ -9,8 +9,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert, Platform, NativeModules } from 'react-native';
 import { Alarm, RepeatPattern, TimeFormat, WeatherSetting } from '../types/types';
+
+const { AlarmModule } = NativeModules;
 
 // 通知の基本設定
 Notifications.setNotificationHandler({
@@ -21,16 +23,6 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
-
-// 音の定義
-const SOUNDS = {
-  default: 'システム標準',
-  bell: 'ベル',
-  correct_answer: '正解音',
-  decision: '決定音',
-  shrine: '神社',
-  wind_chime: '風鈴',
-};
 
 const ALARMS_STORAGE_KEY = '@alarms_list';
 const TIME_FORMAT_STORAGE_KEY = '@time_format';
@@ -165,27 +157,6 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
       // 古いカテゴリ設定の掃除
       await Notifications.deleteNotificationCategoryAsync('record-reminder');
 
-      // Android用の通知チャンネル作成
-      if (Platform.OS === 'android') {
-        // デフォルト
-        await Notifications.setNotificationChannelAsync('default', {
-          name: '標準の通知音',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-        });
-
-        // カスタム音のチャンネルを一括作成
-        const soundKeys = ['bell', 'correct_answer', 'decision', 'shrine', 'wind_chime'];
-        for (const soundKey of soundKeys) {
-           await Notifications.setNotificationChannelAsync(`channel-${soundKey}`, {
-            name: SOUNDS[soundKey as keyof typeof SOUNDS],
-            sound: soundKey + '.mp3',
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-          });
-        }
-      }
-
       // コールドスタート検知
       const lastResponse = await Notifications.getLastNotificationResponseAsync();
       if (lastResponse) {
@@ -271,45 +242,22 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     medicationData?: { name: string; amount: string; unit: string },
     soundKey: string = 'default',
   ) => {
-    let bodyText = '指定された時間になりました！';
-    if (title) {
-      if (medicationData?.name) {
-        bodyText = `${title}: ${medicationData.name} の時間になりました。`;
-      } else {
-        bodyText = detail
-          ? `${title}: ${detail} の時間になりました。`
-          : `${title}の時間になりました。`;
-      }
+    const alarmId = id || new Date().toISOString();
+
+    const rawTitle = title || '記録';
+    const subject = rawTitle.replace(/の?記録$/, ''); 
+    let displayTitle = `${subject}の記録の時間です`;
+
+    if (medicationData?.name) {
+        displayTitle += ` (${medicationData.name})`;
+    } else if (detail) {
+        displayTitle += ` (${detail})`;
     }
 
-    let channelId = 'default';
-    let soundName: string | undefined = undefined;
-
-    if (soundKey !== 'default') {
-      channelId = `channel-${soundKey}`; 
-      soundName = `${soundKey}.mp3`;
-    }
-
-    return await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '記録の時間です',
-        body: bodyText,
-        sound: soundName, 
-        data: {
-          title,
-          detail,
-          id,
-          medicationName: medicationData?.name,
-          medicationAmount: medicationData?.amount,
-          medicationUnit: medicationData?.unit,
-        },
-      },
-      trigger: {
-        channelId: channelId, // Android用チャンネル
-        type: 'date',
-        date: triggerTime,
-      } as any,
-    });
+    console.log(`Nativeアラームセット: ${triggerTime.toLocaleString()} タイトル:${displayTitle}`);
+    AlarmModule.setAlarm(triggerTime.getTime(), displayTitle, alarmId);
+    
+    return alarmId;
   };
 
   const addAlarm = async (
@@ -409,6 +357,13 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     setAlarms((prev) => {
       const target = prev.find((a) => a.id === id || a.notificationId === id);
       if (target) {
+        // 現在鳴っている音を止める
+        AlarmModule.stopAlarm();
+
+        // Androidの予約台帳からも削除（これがないと鳴り続ける）
+        AlarmModule.cancelAlarm(target.id);
+
+        // Expo通知のキャンセル（念のため）
         if (target.notificationId) {
           Notifications.cancelScheduledNotificationAsync(
             target.notificationId,
@@ -421,6 +376,8 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
   };
 
   const completeAlarm = async (id: string) => {
+    AlarmModule.stopAlarm();
+
     let targetAlarm: Alarm | undefined;
     setAlarms((prev) => {
       targetAlarm = prev.find((a) => a.id === id || a.notificationId === id);
@@ -428,6 +385,9 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     });
 
     if (!targetAlarm) return;
+    
+    // ネイティブアラームをキャンセル
+    AlarmModule.cancelAlarm(targetAlarm.id);
 
     if (targetAlarm.notificationId) {
         await Notifications.cancelScheduledNotificationAsync(targetAlarm.notificationId).catch(() => {});

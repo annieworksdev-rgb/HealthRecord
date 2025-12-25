@@ -2,7 +2,7 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
-import { Audio } from 'expo-av';
 
 import { useAlarms } from '../context/AlarmContext';
 import { RepeatPattern, TimeFormat } from '../types/types';
@@ -32,23 +31,6 @@ import {
 } from 'react-native-google-mobile-ads';
 
 const DAYS_OF_WEEK = ['日', '月', '火', '水', '木', '金', '土'];
-
-const SOUND_OPTIONS: Record<string, string> = {
-  default: 'システム標準',
-  bell: 'ベル',
-  correct_answer: '正解音',
-  decision: '決定音',
-  shrine: '神社',
-  wind_chime: '風鈴',
-};
-
-const SOUND_FILES: Record<string, any> = {
-  bell: require('../assets/sounds/bell.mp3'),
-  correct_answer: require('../assets/sounds/correct_answer.mp3'),
-  decision: require('../assets/sounds/decision.mp3'),
-  shrine: require('../assets/sounds/shrine.mp3'),
-  wind_chime: require('../assets/sounds/wind_chime.mp3'),
-};
 
 const REPEAT_LABELS: Record<RepeatPattern, string> = {
   none: 'しない',
@@ -89,10 +71,6 @@ export default function ReservationSettingsScreen() {
   const [showRepeatModal, setShowRepeatModal] = useState(false);
   const [showUnitModal, setShowUnitModal] = useState(false);
 
-  const [selectedSound, setSelectedSound] = useState('default');
-  const [showSoundModal, setShowSoundModal] = useState(false);
-  const soundObject = useRef<Audio.Sound | null>(null);
-
   const [pickerMode, setPickerMode] = useState<'date' | 'time' | null>(null);
 
   const [medName, setMedName] = useState('');
@@ -125,42 +103,9 @@ export default function ReservationSettingsScreen() {
         setMedName(targetAlarm.medicationName || '');
         setMedAmount(targetAlarm.medicationAmount || '');
         setMedUnit(targetAlarm.medicationUnit || '錠剤');
-        setSelectedSound(targetAlarm.soundKey || 'default');
       }
     }
   }, [id, alarms, navigation]);
-
-  useEffect(() => {
-    return () => {
-      if (soundObject.current) {
-        soundObject.current.unloadAsync();
-      }
-    };
-  }, []);
-
-  // プレビュー再生関数
-  const playPreviewSound = async (key: string) => {
-    try {
-      // すでに再生中の音があれば止めて解放する
-      if (soundObject.current) {
-        await soundObject.current.unloadAsync();
-        soundObject.current = null;
-      }
-
-      // 「システム標準」の場合は音源ファイルがないので振動だけさせる
-      if (key === 'default' || !SOUND_FILES[key]) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        return;
-      }
-
-      // 新しい音をロードして再生
-      const { sound } = await Audio.Sound.createAsync(SOUND_FILES[key]);
-      soundObject.current = sound;
-      await sound.playAsync();
-    } catch (error) {
-      console.log('Sound preview error:', error);
-    }
-  };
 
   const needsDetail = currentLabel.includes('服薬') || currentLabel.includes('通院');
   const isMedication = currentLabel.includes('服薬');
@@ -228,9 +173,9 @@ export default function ReservationSettingsScreen() {
       }
 
       if (id) {
-        await updateAlarm(id, finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, selectedSound);
+        await updateAlarm(id, finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, 'default');
       } else {
-        await addAlarm(finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, selectedSound);
+        await addAlarm(finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, 'default');
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -327,11 +272,6 @@ export default function ReservationSettingsScreen() {
           <Text style={styles.valueText}>{REPEAT_LABELS[repeatPattern]}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.row} onPress={() => { Haptics.selectionAsync(); setShowSoundModal(true); }}>
-          <Text style={styles.label}>通知音</Text>
-          <Text style={styles.valueText}>{SOUND_OPTIONS[selectedSound]}</Text>
-        </TouchableOpacity>
-
         {repeatPattern === 'weekly' && (
           <View style={styles.daysContainer}>
             {DAYS_OF_WEEK.map((day, index) => {
@@ -407,7 +347,7 @@ export default function ReservationSettingsScreen() {
         </View>
       </ScrollView>
 
-      {/* 3. 広告エリア (ScrollViewの外に出して最下部に固定) */}
+      {/* 3. 広告エリア */}
       {!isPro && !IS_SCREENSHOT_MODE && (
         <View style={{ 
               alignItems: 'center', 
@@ -449,34 +389,6 @@ export default function ReservationSettingsScreen() {
             ))}
             <TouchableOpacity style={styles.modalCancelButton} onPress={() => setShowRepeatModal(false)}>
               <Text style={styles.modalCancelText}>キャンセル</Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
-
-      <Modal visible={showSoundModal} transparent={true} animationType="fade" onRequestClose={() => setShowSoundModal(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setShowSoundModal(false)}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>通知音を選択</Text>
-            {(Object.keys(SOUND_OPTIONS)).map((key) => (
-              <TouchableOpacity
-                key={key}
-                style={styles.modalOption}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setSelectedSound(key); // 選択状態を更新
-                  playPreviewSound(key); // 音を再生！
-                }}
-              >
-                <Text style={styles.modalOptionText}>
-                  {SOUND_OPTIONS[key]} 
-                  {/* 再生中アイコンなどを出すならここで判定 */}
-                </Text>
-                <View style={styles.radioOuter}>{selectedSound === key && <View style={styles.radioInner} />}</View>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity style={styles.modalCancelButton} onPress={() => setShowSoundModal(false)}>
-              <Text style={styles.modalCancelText}>決定（閉じる）</Text>
             </TouchableOpacity>
           </View>
         </Pressable>

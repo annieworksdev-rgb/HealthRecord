@@ -2,7 +2,7 @@
   "expo": {
     "name": "服薬・体調記録",
     "slug": "HealthManagement",
-    "version": "0.94.003",
+    "version": "0.95.000",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "healthrecord",
