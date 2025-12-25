@@ -544,7 +544,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
         return; 
     }
 
-    const newTime = new Date(Date.now() + 5 * 60 * 1000);
+    const snoozeTime = new Date(Date.now() + 5 * 60 * 1000);
 
     const medData = target.medicationName
       ? {
@@ -554,16 +554,35 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
         }
       : undefined;
 
-    await updateAlarm(
-      id,
-      newTime,
-      target.title,
-      target.detail,
-      target.repeatPattern,
-      target.days,
-      medData,
-      target.soundKey 
-    );
+    const isRecurring = target.repeatPattern !== 'none' || (target.days && target.days.length > 0);
+
+    if (isRecurring) {
+      // パターンA: 繰り返し予約なら、元の予約は「完了（＝次回へ移動）」させて、新しく一時的なスヌーズを作る
+      await completeAlarm(id);
+
+      // 5分後の一回限りアラームを追加
+      await addAlarm(
+        snoozeTime,
+        target.title,
+        target.detail,
+        'none', // 繰り返しなし
+        undefined,
+        medData,
+        target.soundKey
+      );
+    } else {
+      // パターンB: 一回限りの予約（または既にスヌーズ中の予約）なら、時間を更新するだけでOK
+      await updateAlarm(
+        id,
+        snoozeTime, // 5分後に更新
+        target.title,
+        target.detail,
+        'none',
+        undefined, // days情報は消す（念のため）
+        medData,
+        target.soundKey 
+      );
+    }
   };
 
   const restoreAlarms = async (backupAlarms: Alarm[]) => {
