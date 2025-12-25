@@ -19,7 +19,7 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SHORT_SERVICE" />
   <queries>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
@@ -49,9 +49,9 @@
     </activity>
       <receiver android:name=".AlarmReceiver" android:enabled="true" android:exported="false" />
 
-      <service
-          android:name=".AlarmService"
-          android:foregroundServiceType="mediaPlayback"
-          android:exported="false" />
+    <service
+        android:name=".AlarmService"
+        android:foregroundServiceType="shortService"
+        android:exported="false" />
   </application>
 </manifest>

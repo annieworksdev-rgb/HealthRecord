@@ -41,40 +41,58 @@ class AlarmModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
     }
 
     @ReactMethod
-    public void cancelAlarm(String id) {
+    fun cancelAlarm(id: String) {
         try {
-            Context context = getReactApplicationContext();
-            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            val context = reactApplicationContext
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
 
-            Intent intent = new Intent(context, AlarmReceiver.class);
+            val intent = Intent(context, AlarmReceiver::class.java)
 
             // セット時と同じルールでID（requestCode）を作る
-            int requestCode = id.hashCode();
+            val requestCode = id.hashCode()
 
-            // 「存在していれば取得する（なければ何もしない）」というフラグでIntentを取得
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_NO_CREATE
-            );
+            // 「存在していれば取得する（なければ何もしない）」フラグ
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+            )
 
             if (pendingIntent != null && alarmManager != null) {
-                alarmManager.cancel(pendingIntent); // 予約を取り消す
-                pendingIntent.cancel(); // Intent自体も破棄
-                Log.d("AlarmModule", "Cancelled Alarm ID:" + id);
+                alarmManager.cancel(pendingIntent) // 予約を取り消す
+                pendingIntent.cancel() // Intent自体も破棄
+                // Logはimportが必要ですが、一旦削除かandroid.util.Logを使う
+                android.util.Log.d("AlarmModule", "Cancelled Alarm ID:$id")
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     @ReactMethod
     fun stopAlarm() {
-        // サービスを停止する
         val context = reactApplicationContext
+
+        // 1. 鳴っているサービスを止める
         val intent = Intent(context, AlarmService::class.java)
         context.stopService(intent)
+
+        // 2. スヌーズ待ち（AlarmManagerにセットされた予約）があればキャンセルする
+        // AlarmService.kt内で scheduleNextAlarm の requestCode は 0 になっています
+        val snoozeIntent = Intent(context, AlarmReceiver::class.java)
+        val pendingSnoozeIntent = PendingIntent.getBroadcast(
+            context,
+            0, // Service側で指定しているrequestCodeと合わせる
+            snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_NO_CREATE
+        )
+
+        if (pendingSnoozeIntent != null) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+            alarmManager?.cancel(pendingSnoozeIntent)
+            pendingSnoozeIntent.cancel()
+            android.util.Log.d("AlarmModule", "Canceled pending snooze alarm")
+        }
     }
 }
