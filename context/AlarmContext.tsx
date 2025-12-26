@@ -363,25 +363,30 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteAlarm = async (id: string) => {
-    setAlarms((prev) => {
-      const target = prev.find((a) => a.id === id || a.notificationId === id);
-      if (target) {
-        // 現在鳴っている音を止める
-        AlarmModule.stopAlarm();
+    // 1. まず現在のリストから対象を探す（State更新の外でやる）
+    const target = alarms.find((a) => a.id === id || a.notificationId === id);
 
-        // Androidの予約台帳からも削除（これがないと鳴り続ける）
-        AlarmModule.cancelAlarm(target.id);
-
-        // Expo通知のキャンセル（念のため）
-        if (target.notificationId) {
-          Notifications.cancelScheduledNotificationAsync(
-            target.notificationId,
-          ).catch(() => {});
+    if (target) {
+      try {
+        // 2. ネイティブの処理を実行（エラーが出てもcatchできるように囲む）
+        if (AlarmModule) {
+            AlarmModule.stopAlarm();
+            AlarmModule.cancelAlarm(target.id);
+        } else {
+            console.error("AlarmModule is null");
         }
-        return prev.filter((a) => a.id !== target.id);
+
+        // Expo通知のキャンセル
+        if (target.notificationId) {
+          await Notifications.cancelScheduledNotificationAsync(target.notificationId).catch(() => {});
+        }
+      } catch (e) {
+        console.error("削除処理中にエラーが発生しましたが、続行します:", e);
       }
-      return prev;
-    });
+    }
+
+    // 3. 最後にStateを更新する（純粋な計算のみ）
+    setAlarms((prev) => prev.filter((a) => a.id !== id && a.notificationId !== id));
   };
 
   const completeAlarm = async (id: string) => {

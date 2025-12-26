@@ -11,6 +11,9 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 -keep class com.t.karimata.HealthManagement.** { *; }
+-keep class com.t.karimata.HealthManagement.AlarmPackage { *; }
 -keepclassmembers class com.t.karimata.HealthManagement.** { *; }
-
+-keepclassmembers class * extends com.facebook.react.bridge.ReactContextBaseJavaModule {
+   @com.facebook.react.bridge.ReactMethod *;
+}
 # Add any project specific keep options here:
