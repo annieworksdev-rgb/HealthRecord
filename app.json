@@ -2,7 +2,7 @@
   "expo": {
     "name": "服薬・体調記録",
     "slug": "HealthManagement",
-    "version": "0.96.000",
+    "version": "0.96.001",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "healthrecord",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "34"
+      "buildNumber": "35"
     },
     "android": {
       "adaptiveIcon": {
