@@ -1,9 +1,7 @@
 // types.ts
 
-// ▼▼▼ 修正: インポートを削除し、ここで定義する ▼▼▼
 export type TimeFormat = 'auto' | 'h12' | 'h24';
 export type WeatherSetting = 'on' | 'off';
-// ▲▲▲ --- ▲▲▲
 
 export type RepeatPattern =
   | 'none'
@@ -27,6 +25,7 @@ export type Alarm = {
   repeatPattern?: RepeatPattern;
   skippedDates?: string[];
   soundKey?: string;
+  forceAlarm?: boolean;
 };
 
 export type WeatherData = {

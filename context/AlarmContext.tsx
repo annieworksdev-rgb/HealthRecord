@@ -38,6 +38,7 @@ type AlarmContextType = {
     days?: number[],
     medicationData?: { name: string; amount: string; unit: string },
     soundKey?: string,
+    forceAlarm?: boolean,
   ) => Promise<Date>;
   updateAlarm: (
     id: string,
@@ -48,6 +49,7 @@ type AlarmContextType = {
     days?: number[],
     medicationData?: { name: string; amount: string; unit: string },
     soundKey?: string,
+    forceAlarm?: boolean,
   ) => Promise<Date>;
   deleteAlarm: (id: string) => Promise<void>;
   completeAlarm: (id: string) => Promise<void>;
@@ -241,6 +243,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     id?: string,
     medicationData?: { name: string; amount: string; unit: string },
     soundKey: string = 'default',
+    forceAlarm: boolean = true,
   ) => {
     const alarmId = id || new Date().toISOString();
 
@@ -255,7 +258,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     }
 
     console.log(`Nativeアラームセット: ${triggerTime.toLocaleString()} タイトル:${displayTitle}`);
-    AlarmModule.setAlarm(triggerTime.getTime(), displayTitle, alarmId);
+    AlarmModule.setAlarm(triggerTime.getTime(), displayTitle, alarmId, forceAlarm);
     
     return alarmId;
   };
@@ -268,6 +271,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     days?: number[],
     medicationData?: { name: string; amount: string; unit: string },
     soundKey: string = 'default',
+    forceAlarm: boolean = true,
   ): Promise<Date> => {
     const triggerTime = new Date(time);
     triggerTime.setSeconds(0);
@@ -281,6 +285,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
       newAlarmId,
       medicationData,
       soundKey,
+      forceAlarm,
     );
 
     const newAlarm: Alarm = {
@@ -295,6 +300,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
       medicationAmount: medicationData?.amount,
       medicationUnit: medicationData?.unit,
       soundKey,
+      forceAlarm,
     };
     setAlarms((prev) => [...prev, newAlarm]);
     return triggerTime;
@@ -309,6 +315,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     days?: number[],
     medicationData?: { name: string; amount: string; unit: string },
     soundKey: string = 'default',
+    forceAlarm: boolean = true,
   ): Promise<Date> => {
     const triggerTime = new Date(time);
     triggerTime.setSeconds(0);
@@ -327,7 +334,8 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
       detail,
       id,
       medicationData,
-      soundKey
+      soundKey,
+      forceAlarm,
     );
 
     setAlarms((prev) =>
@@ -345,6 +353,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
               medicationAmount: medicationData?.amount,
               medicationUnit: medicationData?.unit,
               soundKey,
+              forceAlarm,
             }
           : a,
       ),
@@ -451,6 +460,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
       targetAlarm.id,
       medData,
       targetAlarm.soundKey,
+      targetAlarm.forceAlarm ?? true,
     );
 
     setAlarms((prev) =>
@@ -474,6 +484,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     originalId: string,
     title?: string,
     detail?: string,
+    forceAlarm: boolean = true,
   ) => {
     const target = alarms.find((a) => a.id === originalId);
     await completeAlarm(originalId);
@@ -489,7 +500,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
         }
       : undefined;
 
-    await addAlarm(snoozeTime, title, detail, 'none', undefined, medData, target?.soundKey);
+    await addAlarm(snoozeTime, title, detail, 'none', undefined, medData, target?.soundKey, forceAlarm);
   };
 
   const autoSnoozeAlarm = async (id: string) => {
@@ -528,7 +539,8 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
         'none', // 繰り返しなし
         undefined,
         medData,
-        target.soundKey
+        target.soundKey,
+        target.forceAlarm ?? true,
       );
     } else {
       // パターンB: 一回限りの予約（または既にスヌーズ中の予約）なら、時間を更新するだけでOK
@@ -540,7 +552,8 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
         'none',
         undefined, // days情報は消す（念のため）
         medData,
-        target.soundKey 
+        target.soundKey,
+        target.forceAlarm ?? true,
       );
     }
   };

@@ -7,6 +7,7 @@ import android.content.Intent
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import androidx.annotation.Keep
 
 @Keep
 class AlarmModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaModule(reactContext) {
@@ -16,13 +17,14 @@ class AlarmModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
     }
 
     @ReactMethod
-    fun setAlarm(timestamp: Double, title: String, id: String) {
+    fun setAlarm(timestamp: Double, title: String, id: String, forceAlarm: Boolean) { // ← 引数追加
         val context = reactApplicationContext
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("TITLE", title)
             putExtra("ALARM_ID", id)
+            putExtra("FORCE_ALARM", forceAlarm)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(

@@ -10,9 +10,9 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.d("AlarmTest", "📩 Receiver着信: システムから通知を受け取りました")
         val serviceIntent = Intent(context, AlarmService::class.java).apply {
-            // JSから受け取ったタイトルなどの情報をServiceに引き継ぐ
             putExtra("TITLE", intent.getStringExtra("TITLE"))
             putExtra("ALARM_ID", intent.getStringExtra("ALARM_ID"))
+            putExtra("FORCE_ALARM", intent.getBooleanExtra("FORCE_ALARM", true))
         }
 
         // Android 8.0以上はフォアグラウンドサービスとして起動必須

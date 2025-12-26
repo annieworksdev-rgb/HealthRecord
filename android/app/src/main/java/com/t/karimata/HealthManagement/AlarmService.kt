@@ -18,6 +18,7 @@ class AlarmService : Service() {
     private var mediaPlayer: MediaPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
     private var currentTitle: String = "アラーム"
+    private var isForceAlarm: Boolean = true
 
     private val AUTO_SNOOZE_DELAY_MS = 60 * 1000L
     private val SNOOZE_DURATION_MS = 5 * 60 * 1000L
@@ -49,11 +50,11 @@ class AlarmService : Service() {
         currentTitle = title
 
         createNotificationChannel()
-        // 最初は音ありで作成（false）
         val notification = createNotification(title, false)
         startForeground(NOTIFICATION_ID, notification)
 
-        startRinging()
+        isForceAlarm = intent?.getBooleanExtra("FORCE_ALARM", true) ?: true
+        startRinging(isForceAlarm)
 
         handler.removeCallbacks(autoSnoozeRunnable)
         handler.postDelayed(autoSnoozeRunnable, AUTO_SNOOZE_DELAY_MS)
@@ -65,6 +66,7 @@ class AlarmService : Service() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, AlarmReceiver::class.java).apply {
             putExtra("TITLE", nextTitle)
+            putExtra("FORCE_ALARM", isForceAlarm)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -76,7 +78,7 @@ class AlarmService : Service() {
         )
     }
 
-    private fun startRinging() {
+    private fun startRinging(forceAlarm: Boolean) {
         if (mediaPlayer?.isPlaying == true) return
 
         val resId = resources.getIdentifier("alarm_sound", "raw", packageName)
@@ -86,11 +88,17 @@ class AlarmService : Service() {
             RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         }
 
+        val usage = if (forceAlarm) {
+            AudioAttributes.USAGE_ALARM
+        } else {
+            AudioAttributes.USAGE_NOTIFICATION
+        }
+
         mediaPlayer = MediaPlayer().apply {
             setDataSource(applicationContext, uri)
             setAudioAttributes(
                 AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setUsage(usage)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build()
             )

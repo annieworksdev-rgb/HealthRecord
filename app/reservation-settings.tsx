@@ -10,6 +10,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -72,6 +73,7 @@ export default function ReservationSettingsScreen() {
   const [showUnitModal, setShowUnitModal] = useState(false);
 
   const [pickerMode, setPickerMode] = useState<'date' | 'time' | null>(null);
+  const [forceAlarm, setForceAlarm] = useState(true);
 
   const [medName, setMedName] = useState('');
   const [medAmount, setMedAmount] = useState('');
@@ -87,6 +89,7 @@ export default function ReservationSettingsScreen() {
         setTargetDate(targetAlarm.time);
         setDetail(targetAlarm.detail || '');
         setCurrentLabel(targetAlarm.title || '');
+        setForceAlarm(targetAlarm.forceAlarm ?? true);
 
         if (targetAlarm.repeatPattern) {
           setRepeatPattern(targetAlarm.repeatPattern);
@@ -173,9 +176,9 @@ export default function ReservationSettingsScreen() {
       }
 
       if (id) {
-        await updateAlarm(id, finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, 'default');
+        await updateAlarm(id, finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, 'default', forceAlarm);
       } else {
-        await addAlarm(finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, 'default');
+        await addAlarm(finalTargetDate, currentLabel, finalDetail, repeatPattern, daysToSave, medData, 'default', forceAlarm);
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -297,6 +300,23 @@ export default function ReservationSettingsScreen() {
             })}
           </View>
         )}
+
+        <View style={styles.row}>
+          <View>
+            <Text style={styles.label}>マナーモードでも鳴らす</Text>
+            <Text style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+              OFFにするとマナーモード時は振動のみになります
+            </Text>
+          </View>
+          <Switch
+            value={forceAlarm}
+            onValueChange={(val) => {
+              Haptics.selectionAsync();
+              setForceAlarm(val);
+            }}
+            trackColor={{ false: '#767577', true: '#34C759' }}
+          />
+        </View>
 
         {isMedication ? (
           <>

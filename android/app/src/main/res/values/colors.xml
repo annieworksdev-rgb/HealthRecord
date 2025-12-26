@@ -13,4 +13,5 @@
   <color name="white">#FFFFFFFF</color>
 
   <color name="iconBackground">#FFFFFF</color>
+  <color name="splashscreen_background">#FFFFFF</color>
 </resources>
