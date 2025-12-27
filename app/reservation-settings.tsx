@@ -169,8 +169,32 @@ export default function ReservationSettingsScreen() {
 
       let finalTargetDate = new Date(targetDate);
 
-      if (repeatPattern === 'daily') {
-        if (finalTargetDate < now) {
+      // A. 過去の場合の自動補正処理
+      if (finalTargetDate <= now) {
+        
+        if (repeatPattern === 'daily') {
+          // 毎日なら明日へ
+          finalTargetDate.setDate(finalTargetDate.getDate() + 1);
+        
+        } else if (repeatPattern === 'biweekly') {
+          // 2週間毎なら14日後へ
+          finalTargetDate.setDate(finalTargetDate.getDate() + 14);
+        
+        } else if (repeatPattern === 'triweekly') {
+          // 3週間毎なら21日後へ
+          finalTargetDate.setDate(finalTargetDate.getDate() + 21);
+        
+        } else if (repeatPattern === 'fourweekly') {
+          // 4週間毎なら28日後へ
+          finalTargetDate.setDate(finalTargetDate.getDate() + 28);
+        }
+      }
+
+      // B. 曜日指定（Weekly）の特例処理
+      // ※Weeklyは「日付」ではなく「曜日」に依存するため、過去チェックとは別にループで未来を探す
+      if (repeatPattern === 'weekly' && selectedDays.length > 0) {
+        // 未来、かつ指定した曜日に当たるまで日付を進め続ける
+        while (finalTargetDate <= now || !selectedDays.includes(finalTargetDate.getDay())) {
           finalTargetDate.setDate(finalTargetDate.getDate() + 1);
         }
       }
@@ -182,10 +206,15 @@ export default function ReservationSettingsScreen() {
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      
+
       let messageDateStr = '';
-      if (repeatPattern === 'daily' && finalTargetDate.getDate() !== targetDate.getDate()) {
-        messageDateStr = '明日から';
+      if (finalTargetDate.getDate() !== targetDate.getDate()) {
+        const diffTime = finalTargetDate.getTime() - targetDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) messageDateStr = '明日から';
+        else if (diffDays === 7) messageDateStr = '来週から';
+        else messageDateStr = `${formatDate(finalTargetDate)}から`;
       }
 
       Toast.show({
