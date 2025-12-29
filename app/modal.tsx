@@ -102,19 +102,30 @@ export default function ModalSettingsScreen() {
         ) : (
           <>
             {/* 商品リストを表示 (RevenueCatから取得したpackages) */}
-            {packages.map((pack) => (
-              <TouchableOpacity
-                key={pack.identifier}
-                style={styles.purchaseButton}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  purchase(pack); // 購入処理実行
-                }}
-              >
-                <Text style={styles.purchaseButtonTitle}>{pack.product.title}</Text>
-                <Text style={styles.purchaseButtonPrice}>{pack.product.priceString}</Text>
-              </TouchableOpacity>
-            ))}
+            {packages.map((pack) => {
+              let planName = pack.product.title; // デフォルトはGoogleのタイトル
+              
+              if (pack.packageType === 'ANNUAL') {
+                planName = '年額プラン (1年)';
+              } else if (pack.packageType === 'MONTHLY') {
+                planName = '月額プラン (1ヶ月)';
+//              } else if (pack.packageType === 'LIFETIME') {
+//                planName = '買い切り (無期限)';
+              }
+              return (
+                <TouchableOpacity
+                  key={pack.identifier}
+                  style={styles.purchaseButton}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    purchase(pack); // 購入処理実行
+                  }}
+                >
+                  <Text style={styles.purchaseButtonTitle}>{planName}</Text>
+                  <Text style={styles.purchaseButtonPrice}>{pack.product.priceString}</Text>
+                </TouchableOpacity>
+              );
+            })}
 
             {packages.length === 0 && (
               <Text style={{ textAlign: 'center', color: '#999', marginBottom: 10 }}>
@@ -224,25 +235,21 @@ export default function ModalSettingsScreen() {
       </TouchableOpacity>
       
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <TouchableOpacity 
-          style={{ marginBottom: 15, padding: 10, backgroundColor: '#eee', borderRadius: 8, alignItems: 'center' }}
-          onPress={() => {
-            Haptics.selectionAsync();
-            toggleProStatusDebug(); // これで強制的に切り替わります
-            Alert.alert('デバッグ', `現在の状態を ${!isPro ? 'プレミアム' : '無料'} に変更しました`);
-          }}
-        >
-          <Text style={{ color: '#555', fontSize: 12 }}>
-             🔧 開発用デバッグ: 課金状態を反転 ({isPro ? 'Pro' : 'Free'})
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.closeButtonText}>閉じる</Text>
-        </TouchableOpacity>
+        {/* __DEV__ が true の時（開発中）だけ表示される */}
+        {__DEV__ && (
+          <TouchableOpacity 
+            style={{ marginBottom: 15, padding: 10, backgroundColor: '#eee', borderRadius: 8, alignItems: 'center' }}
+            onPress={() => {
+              Haptics.selectionAsync();
+              toggleProStatusDebug(); 
+              Alert.alert('デバッグ', `現在の状態を ${!isPro ? 'プレミアム' : '無料'} に変更しました`);
+            }}
+          >
+            <Text style={{ color: '#555', fontSize: 12 }}>
+               🔧 開発用デバッグ: 課金状態を反転 ({isPro ? 'Pro' : 'Free'})
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* 共通選択モーダル */}
