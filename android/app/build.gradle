@@ -92,8 +92,8 @@ android {
         applicationId 'com.t.karimata.HealthManagement'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 39
-        versionName "1.00.000"
+        versionCode 40
+        versionName "1.00.001"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
