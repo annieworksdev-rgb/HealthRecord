@@ -565,18 +565,68 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
 
   const restoreAlarms = async (backupAlarms: Alarm[]) => {
     try {
-      const parsedAlarms = backupAlarms.map(alarm => ({ ...alarm, time: new Date(alarm.time) }));
-      const newAlarms = [...alarms];
-      parsedAlarms.forEach(item => {
-        const index = newAlarms.findIndex(a => a.id === item.id);
-        if (index >= 0) newAlarms[index] = item;
-        else newAlarms.push(item);
+      // 1. 現在登録されているネイティブアラームを全てキャンセルする（重複防止）
+      alarms.forEach((alarm) => {
+        if (AlarmModule) {
+           AlarmModule.cancelAlarm(alarm.id);
+        }
       });
 
-      await AsyncStorage.setItem('alarms', JSON.stringify(newAlarms));
+      // 2. データをマージ（統合）する
+      const parsedAlarms = backupAlarms.map(alarm => ({ ...alarm, time: new Date(alarm.time) }));
+      const newAlarms = [...alarms];
+      
+      parsedAlarms.forEach(item => {
+        const index = newAlarms.findIndex(a => a.id === item.id);
+        if (index >= 0) newAlarms[index] = item; // IDが同じなら上書き
+        else newAlarms.push(item); // 新しいなら追加
+      });
+
+      // 3. マージ後のデータをもとに、未来のアラームを再セットする
+      const now = new Date();
+      
+      // for...of ループで非同期処理を待機しながら実行
+      for (const alarm of newAlarms) {
+        // 過去のアラームは再予約しない
+        if (alarm.time > now) {
+           const medData = alarm.medicationName
+            ? {
+                name: alarm.medicationName,
+                amount: alarm.medicationAmount || '',
+                unit: alarm.medicationUnit || '錠剤',
+              }
+            : undefined;
+
+           const rawTitle = alarm.title || '記録';
+           const subject = rawTitle.replace(/の?記録$/, ''); 
+           let displayTitle = `${subject}の記録の時間です`;
+       
+           if (medData?.name) {
+               displayTitle += ` (${medData.name})`;
+           } else if (alarm.detail) {
+               displayTitle += ` (${alarm.detail})`;
+           }
+
+           // ネイティブアラームを再登録
+           AlarmModule.setAlarm(
+             alarm.time.getTime(),
+             displayTitle,
+             alarm.id,
+             alarm.forceAlarm ?? true
+           );
+           
+           console.log(`アラーム復元: ${alarm.time.toLocaleString()} を再予約しました`);
+        }
+      }
+
+      // 4. 保存と表示更新
+      await AsyncStorage.setItem(ALARMS_STORAGE_KEY, JSON.stringify(newAlarms));
       setAlarms(newAlarms);
       return true;
-    } catch (e) { return false; }
+    } catch (e) { 
+      console.error("Alarm Restore Error:", e);
+      return false; 
+    }
   };
 
   return (
