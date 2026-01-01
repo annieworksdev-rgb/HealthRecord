@@ -1,10 +1,10 @@
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons'; // ★追加
-import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router'; // ★Stack追加
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ★変更
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { DateSelectRow, SaveArea, TimeSelectRow } from '../components/LogScreenParts';
 import { useAlarms } from '../context/AlarmContext';
@@ -39,7 +39,7 @@ export default function BloodSugarLogScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showPickerModal, setShowPickerModal] = useState(false);
 
-  const headerTitle = id ? '記録を編集' : '血糖値の記録';
+  const headerTitle = id ? '記録を編集' : '糖質管理の記録';
   const { isPro, toggleProStatusDebug } = usePurchase();
 
   useEffect(() => {
@@ -66,13 +66,13 @@ export default function BloodSugarLogScreen() {
   const handleSaveLog = async () => {
     if (!value.trim()) { 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('エラー', '血糖値を入力してください。'); 
+      Alert.alert('エラー', '糖質の数値を入力してください。'); 
       return; 
     }
     const parsedValue = parseInt(value.trim());
     if (isNaN(parsedValue) || parsedValue < BS_RANGE || parsedValue > MAX_BS) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('エラー', `有効な血糖値（${BS_RANGE}〜${MAX_BS} mg/dL）を入力してください。`);
+      Alert.alert('エラー', `有効な糖質の数値（${BS_RANGE}〜${MAX_BS} mg/dL）を入力してください。`);
       return;
     }
     isActionTaken.current = true;
@@ -86,7 +86,7 @@ export default function BloodSugarLogScreen() {
       Toast.show({
         type: 'success',
         text1: '保存しました',
-        text2: `血糖値: ${parsedValue} mg/dL`,
+        text2: `糖質管理: ${parsedValue} mg/dL`,
         position: 'bottom',
         visibilityTime: 2000,
       });
@@ -104,7 +104,7 @@ export default function BloodSugarLogScreen() {
       if (alarmId) await snoozeAlarm(alarmId, targetAlarm?.title, targetAlarm?.detail);
       else {
         const snoozeTime = new Date(Date.now() + 30 * 60 * 1000);
-        await addAlarm(snoozeTime, '血糖値の記録', 'スヌーズ', 'none');
+        await addAlarm(snoozeTime, '糖質管理の記録', 'スヌーズ', 'none');
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({ type: 'info', text1: 'スヌーズ設定', text2: '30分後に通知します' });
@@ -139,7 +139,7 @@ export default function BloodSugarLogScreen() {
   
   const pickerOptions = BS_OPTIONS;
   const currentValue = value || '100';
-  const title = '血糖値を選択';
+  const title = '糖質の数値を選択';
   const isDisabled = !value.trim();
 
   return (
@@ -176,7 +176,7 @@ export default function BloodSugarLogScreen() {
             </View>
 
             <View style={commonStyles.inputRow}>
-              <Text style={commonStyles.label}>血糖値 (mg/dL)</Text>
+              <Text style={commonStyles.label}>糖質の数値 (mg/dL)</Text>
               <View style={styles.inputGroup}>
                   <TextInput style={commonStyles.textInput} value={value} onChangeText={setValue} keyboardType="numeric" placeholder="100" />
                   <TouchableOpacity style={styles.pickerButton} onPress={openPicker}><Text style={styles.pickerIcon}>⚙️</Text></TouchableOpacity>

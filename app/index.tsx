@@ -341,8 +341,10 @@ export default function RecordListScreen() {
           </View>
           <View style={styles.calContent}>
             {hasHealth && <View style={styles.calDotRow}><View style={[styles.calDot, { backgroundColor: '#e91e63' }]} /><Text style={styles.calIconText}>体調</Text></View>}
-            {hasMedication && <View style={styles.calDotRow}><View style={[styles.calDot, { backgroundColor: '#2196f3' }]} /><Text style={styles.calIconText}>服薬</Text></View>}
-            {hasVisit && <View style={styles.calDotRow}><View style={[styles.calDot, { backgroundColor: '#d84315' }]} /><Text style={styles.calIconText}>通院</Text></View>}
+            {/* ★修正: 服薬→サプリ */}
+            {hasMedication && <View style={styles.calDotRow}><View style={[styles.calDot, { backgroundColor: '#2196f3' }]} /><Text style={styles.calIconText}>サプリ</Text></View>}
+            {/* ★修正: 通院→メンテ */}
+            {hasVisit && <View style={styles.calDotRow}><View style={[styles.calDot, { backgroundColor: '#d84315' }]} /><Text style={styles.calIconText}>メンテ</Text></View>}
             {hasMeasurement && <View style={styles.calDotRow}><View style={[styles.calDot, { backgroundColor: '#4caf50' }]} /><Text style={styles.calIconText}>測定</Text></View>}
           </View>
         </TouchableOpacity>,
@@ -529,17 +531,18 @@ export default function RecordListScreen() {
               <MaterialCommunityIcons name="emoticon-happy-outline" size={24} color="#e91e63" style={{ marginRight: 15 }} />
               <Text style={styles.optionText}>体調記録</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.optionButton} onPress={() => { Haptics.selectionAsync(); handleLogOptionSelect('/medication-log', '服薬の記録'); }}>
+            <TouchableOpacity style={styles.optionButton} onPress={() => { Haptics.selectionAsync(); handleLogOptionSelect('/medication-log', 'サプリの記録'); }}>
               <MaterialCommunityIcons name="pill" size={24} color="#2196f3" style={{ marginRight: 15 }} />
-              <Text style={styles.optionText}>服薬記録</Text>
+              <Text style={styles.optionText}>サプリ記録</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.optionButton} onPress={() => { Haptics.selectionAsync(); handleLogOptionSelect('/visit-log', '通院記録'); }}>
+            {/* ★修正: 通院→メンテナンス記録 */}
+            <TouchableOpacity style={styles.optionButton} onPress={() => { Haptics.selectionAsync(); handleLogOptionSelect('/visit-log', 'メンテナンス記録'); }}>
               <MaterialCommunityIcons name="hospital-building" size={24} color="#d84315" style={{ marginRight: 15 }} />
-              <Text style={styles.optionText}>通院記録</Text>
+              <Text style={styles.optionText}>メンテナンス記録</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.optionButton} onPress={() => { Haptics.selectionAsync(); handleLogOptionSelect('TRIGGER_MEASUREMENT', ''); }}>
               <MaterialCommunityIcons name="monitor-dashboard" size={24} color="#4caf50" style={{ marginRight: 15 }} />
-              <Text style={styles.optionText}>測定記録 (血圧・体重など)</Text>
+              <Text style={styles.optionText}>測定記録 (BP・体重など)</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.optionButton, styles.cancelButton]} onPress={() => handleLogOptionSelect(null, '')}>
               <Text style={[styles.optionText, styles.cancelText]}>キャンセル</Text>
@@ -553,17 +556,19 @@ export default function RecordListScreen() {
           <Pressable style={styles.modalContent}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>測定項目の選択</Text>
-            <TouchableOpacity style={styles.optionButton} onPress={() => handleMeasurementOptionSelect('/blood-pressure-log', '血圧・脈拍')}>
+            {/* ★修正: 血圧→バイタル */}
+            <TouchableOpacity style={styles.optionButton} onPress={() => handleMeasurementOptionSelect('/blood-pressure-log', 'バイタル')}>
               <MaterialCommunityIcons name="heart-pulse" size={24} color="#4caf50" style={{ marginRight: 15 }} />
-              <Text style={styles.optionText}>血圧・安静時心拍数</Text>
+              <Text style={styles.optionText}>バイタル (BP/BPM)</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.optionButton} onPress={() => handleMeasurementOptionSelect('/weight-log', '体重')}>
               <MaterialCommunityIcons name="scale-bathroom" size={24} color="#4caf50" style={{ marginRight: 15 }} />
               <Text style={styles.optionText}>体重</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.optionButton} onPress={() => handleMeasurementOptionSelect('/blood-sugar-log', '血糖値')}>
+            {/* ★修正: 血糖値→糖質管理 */}
+            <TouchableOpacity style={styles.optionButton} onPress={() => handleMeasurementOptionSelect('/blood-sugar-log', '糖質管理')}>
               <MaterialCommunityIcons name="water" size={24} color="#4caf50" style={{ marginRight: 15 }} />
-              <Text style={styles.optionText}>血糖値</Text>
+              <Text style={styles.optionText}>糖質管理</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.optionButton} onPress={() => handleMeasurementOptionSelect('/temperature-log', '体温')}>
               <MaterialCommunityIcons name="thermometer" size={24} color="#4caf50" style={{ marginRight: 15 }} />

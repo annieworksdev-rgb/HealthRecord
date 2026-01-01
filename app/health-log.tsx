@@ -1,3 +1,4 @@
+// (前略... import等はそのまま)
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
@@ -33,6 +34,7 @@ import {
 } from 'react-native-google-mobile-ads';
 
 export default function HealthLogScreen() {
+  // ... (中略。ロジック部分は変更なし) ...
   const insets = useSafeAreaInsets();
   const { id, fromReservation, alarmId } = useLocalSearchParams<{ 
     id?: string; 
@@ -89,6 +91,7 @@ export default function HealthLogScreen() {
     }
   }, [id, logs, navigation]);
 
+  // ... (fetchWeatherForSelectedTime や handleSaveLog などの関数はそのまま) ...
   const fetchWeatherForSelectedTime = async () => {
     if (weatherSetting !== 'on') return;
 
@@ -131,7 +134,6 @@ export default function HealthLogScreen() {
         resCur.json(), resM3.json(), resM6.json(), resP3.json(), resP6.json()
       ]);
 
-      // データセット用ヘルパー関数
       const extractWeather = (json: any): WeatherData | null => {
         if (json.data && json.data.length > 0) {
           const d = json.data[0];
@@ -194,10 +196,8 @@ export default function HealthLogScreen() {
       if (alarmId) await completeAlarm(alarmId);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({ type: 'success', text1: '保存しました', position: 'bottom', visibilityTime: 2000 });
-      // 広告表示ロジック
-      // 天気ON かつ 新規作成 かつ 無料ユーザー かつ 広告読込完了なら表示
       if (weatherSetting === 'on' && !id && !isPro && !IS_SCREENSHOT_MODE && isLoaded) {
-        show(); // ドーンと表示
+        show();
       } else {
         router.back();
       }
@@ -253,14 +253,12 @@ export default function HealthLogScreen() {
     </View>
   );
 
-  // 画面を開いた時に読み込み開始（無料ユーザーのみ）
   useEffect(() => {
     if (!isPro) {
       load();
     }
   }, [load, isPro]);
 
-  // 広告を閉じたら前の画面に戻る
   useEffect(() => {
     if (isClosed) {
       router.back();
@@ -270,7 +268,6 @@ export default function HealthLogScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <Stack.Screen options={{ headerShown: false }} />
-      {/* 自作ヘッダー */}
       <View style={{ backgroundColor: '#fff', paddingTop: insets.top, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
         <View style={{ height: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <TouchableOpacity onPress={() => router.back()} style={{ position: 'absolute', left: 0, paddingHorizontal: 16, height: '100%', justifyContent: 'center' }}>
@@ -291,6 +288,7 @@ export default function HealthLogScreen() {
 
             {weatherSetting === 'on' && (
               <View style={styles.weatherContainer}>
+                {/* (中略: 天気表示部分はそのまま) */}
                 <View style={{ 
                   flexDirection: 'row', 
                   justifyContent: 'space-between', 
@@ -363,11 +361,13 @@ export default function HealthLogScreen() {
               </View>
             </View>
 
-            <Text style={commonStyles.listHeader}>体調の変化</Text>
+            {/* ★修正: 「体調の変化」→「気になるところ」 */}
+            <Text style={commonStyles.listHeader}>気になるところ</Text>
             <View style={styles.symptomsScrollContainer}>
               <ScrollView nestedScrollEnabled={true}>
                 {SYMPTOMS_GROUPS.map((group) => (
                   <View key={group.category} style={styles.groupContainer}>
+                    {/* ★注意: group.category の中身が「症状」なら utils/shared.ts で「メモ」等に変えてください */}
                     <Text style={styles.groupTitle}>{group.category}</Text>
                     {group.items.map((symptom) => (
                       <TouchableOpacity 

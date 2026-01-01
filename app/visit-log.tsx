@@ -53,7 +53,8 @@ export default function VisitLogScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const { isPro, toggleProStatusDebug } = usePurchase();
   
-  const headerTitle = id ? '記録を編集' : '通院の記録';
+  // ★修正: 「通院」→「メンテナンス」
+  const headerTitle = id ? '記録を編集' : 'メンテナンス記録';
 
   useEffect(() => {
     if (id) {
@@ -126,7 +127,8 @@ export default function VisitLogScreen() {
   const handleSaveLog = async () => {
     if (!hospitalName.trim()) { 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('エラー', '病院名を入力してください。'); 
+      // ★修正: エラーメッセージも「施設名」に
+      Alert.alert('エラー', '施設名を入力してください。'); 
       return; 
     }
     isActionTaken.current = true;
@@ -141,7 +143,7 @@ export default function VisitLogScreen() {
       Toast.show({
         type: 'success',
         text1: '保存しました',
-        text2: `病院名: ${hospitalName.trim()}`,
+        text2: `施設: ${hospitalName.trim()}`,
         position: 'bottom',
         visibilityTime: 2000,
       });
@@ -159,7 +161,8 @@ export default function VisitLogScreen() {
       if (alarmId) await snoozeAlarm(alarmId, targetAlarm?.title, targetAlarm?.detail);
       else {
         const snoozeTime = new Date(Date.now() + 30 * 60 * 1000);
-        await addAlarm(snoozeTime, '通院の記録', hospitalName);
+        // ★修正: 通知タイトルも「メンテナンス記録」に
+        await addAlarm(snoozeTime, 'メンテナンス記録', hospitalName);
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({ type: 'info', text1: 'スヌーズ設定', text2: '30分後に通知します' });
@@ -206,17 +209,20 @@ export default function VisitLogScreen() {
             <TimeSelectRow time={time} timeString={formatTime(time, 'h24')} showPicker={showTimePicker} onPress={() => setShowTimePicker(true)} onChange={(e, t) => { setShowTimePicker(false); if(t) setTime(t); }} onClose={() => setShowTimePicker(false)} />
 
             <View style={commonStyles.inputRow}>
-              <Text style={commonStyles.label}>病院名</Text>
-              <TextInput style={commonStyles.textInput} value={hospitalName} onChangeText={setHospitalName} placeholder="〇〇病院 など" />
+              {/* ★修正: 病院名→施設名 */}
+              <Text style={commonStyles.label}>施設名</Text>
+              <TextInput style={commonStyles.textInput} value={hospitalName} onChangeText={setHospitalName} placeholder="〇〇ジム、〇〇センター など" />
             </View>
 
             <View style={commonStyles.inputRow}>
-              <Text style={commonStyles.label}>主な症状名</Text>
-              <TextInput style={commonStyles.textInput} value={symptoms} onChangeText={setSymptoms} placeholder="頭痛、発熱 など" />
+              {/* ★修正: 症状名→気になるところ（メモ） */}
+              <Text style={commonStyles.label}>気になるところ (メモ)</Text>
+              <TextInput style={commonStyles.textInput} value={symptoms} onChangeText={setSymptoms} placeholder="リフレッシュ、筋肉痛 など" />
             </View>
 
             <View style={styles.switchRow}>
-              <Text style={commonStyles.label}>投薬の有無</Text>
+              {/* ★修正: 投薬→アイテム利用 */}
+              <Text style={commonStyles.label}>アイテム利用</Text>
               <View style={styles.switchContainer}>
                 <Text style={{ marginRight: 10, color: hasMedication ? '#007AFF' : '#888' }}>{hasMedication ? 'あり' : 'なし'}</Text>
                 <Switch onValueChange={(val) => { Haptics.selectionAsync(); setHasMedication(val); }} value={hasMedication} />
@@ -224,7 +230,8 @@ export default function VisitLogScreen() {
             </View>
 
             <View style={styles.imageSection}>
-              <Text style={commonStyles.label}>画像 (処方箋・明細書など)</Text>
+              {/* ★修正: 処方箋→明細書 */}
+              <Text style={commonStyles.label}>画像 (明細書・記録など)</Text>
               <View style={styles.imageButtonsRow}>
                 <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
                   <Text style={styles.imageButtonText}>📷 アルバムから</Text>

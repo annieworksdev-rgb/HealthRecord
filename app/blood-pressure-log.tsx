@@ -1,10 +1,10 @@
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons'; // ★追加
-import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router'; // ★Stack追加
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Button, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View, } from 'react-native';
 import RNPickerSelect from 'react-native-picker-select';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ★変更
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { DateSelectRow, SaveArea, TimeSelectRow } from '../components/LogScreenParts';
 import { useAlarms } from '../context/AlarmContext';
@@ -43,7 +43,7 @@ export default function BloodPressureLogScreen() {
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [pickerTarget, setPickerTarget] = useState<'systolic' | 'diastolic' | 'heartRate' | null>(null);
 
-  const headerTitle = id ? '記録を編集' : '血圧の記録';
+  const headerTitle = id ? '記録を編集' : 'バイタルの記録';
   const { isPro, toggleProStatusDebug } = usePurchase();
   
   useEffect(() => {
@@ -84,12 +84,12 @@ export default function BloodPressureLogScreen() {
     }
     if (!skipBloodPressure && (!isBpEntered || parseInt(systolic) <= parseInt(diastolic))) { 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('エラー', '血圧の値を正しく入力してください。'); 
+      Alert.alert('エラー', 'BPの値を正しく入力してください。'); 
       return; 
     }
     if (!skipHeartRate && !isHrEntered) { 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('エラー', '心拍数を入力してください。'); 
+      Alert.alert('エラー', 'BPMを入力してください。'); 
       return; 
     }
 
@@ -105,8 +105,8 @@ export default function BloodPressureLogScreen() {
       if (alarmId) await completeAlarm(alarmId);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const displayTextParts = [];
-      if (finalSystolic && finalDiastolic) displayTextParts.push(`血圧: ${finalSystolic}/${finalDiastolic} mmHg`);
-      if (finalHeartRate) displayTextParts.push(`脈拍: ${finalHeartRate} bpm`);
+      if (finalSystolic && finalDiastolic) displayTextParts.push(`BP: ${finalSystolic}/${finalDiastolic} mmHg`);
+      if (finalHeartRate) displayTextParts.push(`BPM: ${finalHeartRate} bpm`);
       const message = displayTextParts.join('  ');
       Toast.show({
         type: 'success',
@@ -129,7 +129,7 @@ export default function BloodPressureLogScreen() {
       if (alarmId) await snoozeAlarm(alarmId, targetAlarm?.title, targetAlarm?.detail);
       else {
         const snoozeTime = new Date(Date.now() + 30 * 60 * 1000);
-        await addAlarm(snoozeTime, '血圧の記録', 'スヌーズ', 'none', undefined, undefined); 
+        await addAlarm(snoozeTime, 'バイタルチェック', 'スヌーズ', 'none', undefined, undefined); 
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({ type: 'info', text1: 'スヌーズ設定', text2: '30分後に通知します' });
@@ -171,9 +171,9 @@ export default function BloodPressureLogScreen() {
     let options = BLOOD_PRESSURE_OPTIONS;
     let currentValue = '';
     let title = '';
-    if (pickerTarget === 'systolic') { currentValue = systolic || '120'; title = '最高血圧'; }
-    else if (pickerTarget === 'diastolic') { currentValue = diastolic || '80'; title = '最低血圧'; }
-    else if (pickerTarget === 'heartRate') { options = HEART_RATE_OPTIONS; currentValue = restingHeartRate || '60'; title = '安静時心拍数'; }
+    if (pickerTarget === 'systolic') { currentValue = systolic || '120'; title = 'BP(High)'; }
+    else if (pickerTarget === 'diastolic') { currentValue = diastolic || '80'; title = 'BP(Low)'; }
+    else if (pickerTarget === 'heartRate') { options = HEART_RATE_OPTIONS; currentValue = restingHeartRate || '60'; title = 'BPM'; }
     return { options, currentValue, title };
   };
   const { options, currentValue, title } = getPickerProps();
@@ -201,9 +201,9 @@ export default function BloodPressureLogScreen() {
             <DateSelectRow date={date} showPicker={showDatePicker} onPress={() => setShowDatePicker(true)} onChange={(e, d) => { setShowDatePicker(false); if(d) setDate(d); }} onClose={() => setShowDatePicker(false)} />
             <TimeSelectRow time={time} timeString={formatTime(time, 'h24')} showPicker={showTimePicker} onPress={() => setShowTimePicker(true)} onChange={(e, t) => { setShowTimePicker(false); if(t) setTime(t); }} onClose={() => setShowTimePicker(false)} />
 
-            <View style={styles.switchRow}><Text style={commonStyles.label}>血圧を記録しない</Text><Switch value={skipBloodPressure} onValueChange={(val) => { setSkipBloodPressure(val); if(val) { setSystolic(''); setDiastolic(''); }}} /></View>
+            <View style={styles.switchRow}><Text style={commonStyles.label}>BPを記録しない</Text><Switch value={skipBloodPressure} onValueChange={(val) => { setSkipBloodPressure(val); if(val) { setSystolic(''); setDiastolic(''); }}} /></View>
             <View style={commonStyles.inputRow}>
-              <Text style={commonStyles.label}>最高血圧</Text>
+              <Text style={commonStyles.label}>BP(High)</Text>
               <View style={styles.inputGroup}>
                 <TextInput style={commonStyles.textInput} value={systolic} onChangeText={setSystolic} keyboardType="numeric" placeholder="120" editable={!skipBloodPressure} />
                 <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker('systolic')} disabled={skipBloodPressure}><Text style={styles.pickerIcon}>⚙️</Text></TouchableOpacity>
@@ -212,7 +212,7 @@ export default function BloodPressureLogScreen() {
             </View>
             
             <View style={commonStyles.inputRow}>
-              <Text style={commonStyles.label}>最低血圧</Text>
+              <Text style={commonStyles.label}>BP(Low)</Text>
               <View style={styles.inputGroup}>
                 <TextInput style={commonStyles.textInput} value={diastolic} onChangeText={setDiastolic} keyboardType="numeric" placeholder="80" editable={!skipBloodPressure} />
                 <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker('diastolic')} disabled={skipBloodPressure}><Text style={styles.pickerIcon}>⚙️</Text></TouchableOpacity>
@@ -220,9 +220,9 @@ export default function BloodPressureLogScreen() {
               </View>
             </View>
 
-            <View style={styles.switchRow}><Text style={commonStyles.label}>心拍数を記録しない</Text><Switch value={skipHeartRate} onValueChange={(val) => { setSkipHeartRate(val); if(val) setRestingHeartRate(''); }} /></View>
+            <View style={styles.switchRow}><Text style={commonStyles.label}>BPMを記録しない</Text><Switch value={skipHeartRate} onValueChange={(val) => { setSkipHeartRate(val); if(val) setRestingHeartRate(''); }} /></View>
             <View style={commonStyles.inputRow}>
-              <Text style={commonStyles.label}>安静時心拍数</Text>
+              <Text style={commonStyles.label}>BPM</Text>
               <View style={styles.inputGroup}>
                 <TextInput style={commonStyles.textInput} value={restingHeartRate} onChangeText={setRestingHeartRate} keyboardType="numeric" placeholder="60" editable={!skipHeartRate} />
                 <TouchableOpacity style={styles.pickerButton} onPress={() => openPicker('heartRate')} disabled={skipHeartRate}><Text style={styles.pickerIcon}>⚙️</Text></TouchableOpacity>

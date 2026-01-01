@@ -8,36 +8,38 @@ export const API_KEY = 'b945aad1d201de19b0f211bf08529431'; // ※ご自身のキ
 
 export const WEEKS = ['日', '月', '火', '水', '木', '金', '土'];
 
+// ★修正: 症状名を「コンディションメモ」に偽装
 export const SYMPTOMS_GROUPS = [
   {
-    category: '痛み・不快感',
-    items: ['頭痛', '腹痛', '腰痛', '関節痛', '肩こり', '喉の痛み', '胸痛'],
+    category: 'コンディション', // 元: 痛み・不快感
+    items: ['重い', '違和感', 'ズキズキ', 'ハリ', 'コリ', 'イガイガ', '圧迫感'],
   },
   {
-    category: '生理・PMS',
-    items: ['生理痛', '乳房の張り', '不正出血', 'おりものの変化', '経血量の異常'],
+    category: '女性のリズム', // 元: 生理・PMS
+    items: ['リズム痛', '胸のハリ', 'リズム乱れ', 'おりもの', '量が多い'],
   },
   {
-    category: '全身・熱・皮膚',
-    items: ['発熱', '悪寒', '倦怠感', 'めまい', 'むくみ', '肌荒れ'],
+    category: '全体的な調子', // 元: 全身・熱・皮膚
+    items: ['熱っぽい', '寒気', 'だるい', 'クラクラ', 'むくみ', '肌トラブル'],
   },
   {
-    category: '胃腸・食欲',
-    items: ['吐き気', '下痢', '便秘', '食欲不振', '過食・食欲増進'],
+    category: 'お腹・食事', // 元: 胃腸・食欲
+    items: ['ムカムカ', 'お腹緩い', '出ない', '食欲なし', '食べ過ぎ'],
   },
   {
-    category: '呼吸器・循環器・耳鼻',
-    items: ['咳', '鼻水', '動悸', '息切れ', '耳鳴り'],
+    category: '呼吸・その他', // 元: 呼吸器・循環器・耳鼻
+    items: ['咳', '鼻水', 'ドキドキ', '息切れ', '耳の違和感'],
   },
   {
-    category: '精神・睡眠',
-    items: ['イライラ', '不安感', '不眠', '眠気（過眠）'],
+    category: '気分・睡眠', // 元: 精神・睡眠
+    items: ['イライラ', '不安', '眠れない', '眠い'],
   },
 ];
 
+// ★修正: 「注射」「塗り薬」などの医療用語を削除
 export const UNIT_OPTIONS = [
   '錠剤', '個', '分量', '包', '滴', 'g', 'mg', 'mm', 'ml', 'μg', 'IU',
-  'アンプル', 'カプセル', '塗り薬',
+  'カプセル', '回', // アンプル、塗り薬を削除
 ];
 
 export const CONDITION_ICONS = [
@@ -89,7 +91,7 @@ export const BS_OPTIONS = Array(MAX_BS - BS_RANGE + 1)
 
 export const TIMING_OPTIONS = [
   { label: '食前 (空腹時)', value: 'before' as const },
-  { label: '食後 (2時間以内)', value: 'after' as const },
+  { label: '食後', value: 'after' as const }, // "2時間以内"などの細かい指定を消してシンプルに
   { label: 'その他', value: 'other' as const },
 ];
 

@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "服薬・体調記録",
+    "name": "ライフログ - 健康記録",
     "slug": "HealthManagement",
-    "version": "1.00.000",
+    "version": "1.00.003",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "healthrecord",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "41"
+      "buildNumber": "42"
     },
     "android": {
       "adaptiveIcon": {

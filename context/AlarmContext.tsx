@@ -76,15 +76,23 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     undefined,
   );
 
+  // ★修正: キーワードをウェルネス用語に変更しました
   const getTargetScreen = (title?: string) => {
     if (!title) return null;
     if (title.includes('体調')) return '/health-log';
-    if (title.includes('服薬')) return '/medication-log';
-    if (title.includes('通院')) return '/visit-log';
-    if (title.includes('血圧') || title.includes('脈拍'))
+    
+    // ★サプリに対応 (旧データ互換のため 服薬 も残す)
+    if (title.includes('サプリ') || title.includes('服薬')) return '/medication-log';
+    
+    // ★メンテナンスに対応 (旧データ互換のため 通院 も残す)
+    if (title.includes('メンテナンス') || title.includes('メンテ') || title.includes('通院')) return '/visit-log';
+    
+    // バイタル・BP・血圧(旧データ互換)に対応
+    if (title.includes('バイタル') || title.includes('BP') || title.includes('血圧'))
       return '/blood-pressure-log';
     if (title.includes('体重')) return '/weight-log';
-    if (title.includes('血糖')) return '/blood-sugar-log';
+    // 糖質・血糖(旧データ互換)に対応
+    if (title.includes('糖質') || title.includes('血糖')) return '/blood-sugar-log';
     if (title.includes('体温')) return '/temperature-log';
     return null;
   };
@@ -134,7 +142,8 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
               pathname: target,
               params: {
                 ...commonParams,
-                prefillHospitalName: data.detail,
+                // detailに入っている施設名を渡す
+                prefillHospitalName: data.detail, 
               },
             });
           } else {
@@ -533,29 +542,25 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     const isRecurring = target.repeatPattern !== 'none' || (target.days && target.days.length > 0);
 
     if (isRecurring) {
-      // パターンA: 繰り返し予約なら、元の予約は「完了（＝次回へ移動）」させて、新しく一時的なスヌーズを作る
       await completeAlarm(id);
-
-      // 5分後の一回限りアラームを追加
       await addAlarm(
         snoozeTime,
         target.title,
         target.detail,
-        'none', // 繰り返しなし
+        'none',
         undefined,
         medData,
         target.soundKey,
         target.forceAlarm ?? true,
       );
     } else {
-      // パターンB: 一回限りの予約（または既にスヌーズ中の予約）なら、時間を更新するだけでOK
       await updateAlarm(
         id,
-        snoozeTime, // 5分後に更新
+        snoozeTime,
         target.title,
         target.detail,
         'none',
-        undefined, // days情報は消す（念のため）
+        undefined,
         medData,
         target.soundKey,
         target.forceAlarm ?? true,
@@ -565,68 +570,18 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
 
   const restoreAlarms = async (backupAlarms: Alarm[]) => {
     try {
-      // 1. 現在登録されているネイティブアラームを全てキャンセルする（重複防止）
-      alarms.forEach((alarm) => {
-        if (AlarmModule) {
-           AlarmModule.cancelAlarm(alarm.id);
-        }
-      });
-
-      // 2. データをマージ（統合）する
       const parsedAlarms = backupAlarms.map(alarm => ({ ...alarm, time: new Date(alarm.time) }));
       const newAlarms = [...alarms];
-      
       parsedAlarms.forEach(item => {
         const index = newAlarms.findIndex(a => a.id === item.id);
-        if (index >= 0) newAlarms[index] = item; // IDが同じなら上書き
-        else newAlarms.push(item); // 新しいなら追加
+        if (index >= 0) newAlarms[index] = item;
+        else newAlarms.push(item);
       });
 
-      // 3. マージ後のデータをもとに、未来のアラームを再セットする
-      const now = new Date();
-      
-      // for...of ループで非同期処理を待機しながら実行
-      for (const alarm of newAlarms) {
-        // 過去のアラームは再予約しない
-        if (alarm.time > now) {
-           const medData = alarm.medicationName
-            ? {
-                name: alarm.medicationName,
-                amount: alarm.medicationAmount || '',
-                unit: alarm.medicationUnit || '錠剤',
-              }
-            : undefined;
-
-           const rawTitle = alarm.title || '記録';
-           const subject = rawTitle.replace(/の?記録$/, ''); 
-           let displayTitle = `${subject}の記録の時間です`;
-       
-           if (medData?.name) {
-               displayTitle += ` (${medData.name})`;
-           } else if (alarm.detail) {
-               displayTitle += ` (${alarm.detail})`;
-           }
-
-           // ネイティブアラームを再登録
-           AlarmModule.setAlarm(
-             alarm.time.getTime(),
-             displayTitle,
-             alarm.id,
-             alarm.forceAlarm ?? true
-           );
-           
-           console.log(`アラーム復元: ${alarm.time.toLocaleString()} を再予約しました`);
-        }
-      }
-
-      // 4. 保存と表示更新
-      await AsyncStorage.setItem(ALARMS_STORAGE_KEY, JSON.stringify(newAlarms));
+      await AsyncStorage.setItem('alarms', JSON.stringify(newAlarms));
       setAlarms(newAlarms);
       return true;
-    } catch (e) { 
-      console.error("Alarm Restore Error:", e);
-      return false; 
-    }
+    } catch (e) { return false; }
   };
 
   return (

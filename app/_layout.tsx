@@ -21,11 +21,15 @@ export default function RootLayout() {
                 <Stack.Screen name="index" />
 
                 <Stack.Screen name="health-log" options={{ presentation: 'modal', title: '体調記録' }} />
-                <Stack.Screen name="medication-log" options={{ presentation: 'modal', title: '服薬記録' }} />
-                <Stack.Screen name="visit-log" options={{ presentation: 'modal', title: '通院記録' }} />
-                <Stack.Screen name="blood-pressure-log" options={{ presentation: 'modal', title: '血圧記録' }} />
+                {/* ★修正: 服薬→サプリ */}
+                <Stack.Screen name="medication-log" options={{ presentation: 'modal', title: 'サプリ記録' }} />
+                {/* ★修正: 通院→メンテナンス */}
+                <Stack.Screen name="visit-log" options={{ presentation: 'modal', title: 'メンテナンス記録' }} />
+                {/* ★修正: 血圧→バイタル */}
+                <Stack.Screen name="blood-pressure-log" options={{ presentation: 'modal', title: 'バイタル記録' }} />
                 <Stack.Screen name="weight-log" options={{ presentation: 'modal', title: '体重記録' }} />
-                <Stack.Screen name="blood-sugar-log" options={{ presentation: 'modal', title: '血糖値記録' }} />
+                {/* ★修正: 血糖値→糖質管理 */}
+                <Stack.Screen name="blood-sugar-log" options={{ presentation: 'modal', title: '糖質管理' }} />
                 <Stack.Screen name="temperature-log" options={{ presentation: 'modal', title: '体温記録' }} />
                 <Stack.Screen name="reservation-settings" options={{ presentation: 'modal', title: '予約設定' }} />
                 <Stack.Screen name="graph" options={{ presentation: 'modal', title: '体調グラフ' }} />

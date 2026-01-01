@@ -198,7 +198,7 @@ export default function GraphScreen() {
         <View>
           {hasBpData && (
             <View style={styles.chartCard}>
-              <Text style={styles.chartTitle}>血圧 <Text style={styles.chartTitleSub}>(mmHg)</Text></Text>
+              <Text style={styles.chartTitle}>BP <Text style={styles.chartTitleSub}>(mmHg)</Text></Text>
               <LineChart
                 data={bpDataSystolic} data2={bpDataDiastolic} height={220} width={SCREEN_WIDTH - 80} initialSpacing={20} spacing={40} thickness={3}
                 color1="#FF5252" color2="#448AFF" dataPointsColor1="#FF5252" dataPointsColor2="#448AFF" textShiftY={-2} textShiftX={-10} textFontSize={11}
@@ -206,14 +206,14 @@ export default function GraphScreen() {
                 hideRules yAxisThickness={0} xAxisThickness={1} xAxisColor="#ddd" curved isAnimated scrollToEnd
               />
               <View style={styles.legendContainer}>
-                <View style={[styles.legendDot, { backgroundColor: '#FF5252' }]} /><Text style={styles.legendText}>最高</Text>
-                <View style={[styles.legendDot, { backgroundColor: '#448AFF', marginLeft: 15 }]} /><Text style={styles.legendText}>最低</Text>
+                <View style={[styles.legendDot, { backgroundColor: '#FF5252' }]} /><Text style={styles.legendText}>High</Text>
+                <View style={[styles.legendDot, { backgroundColor: '#448AFF', marginLeft: 15 }]} /><Text style={styles.legendText}>Low</Text>
               </View>
             </View>
           )}
           {hasPulseData && (
             <View style={styles.chartCard}>
-              <Text style={styles.chartTitle}>脈拍 <Text style={styles.chartTitleSub}>(bpm)</Text></Text>
+              <Text style={styles.chartTitle}>BPM <Text style={styles.chartTitleSub}>(bpm)</Text></Text>
               <LineChart
                 data={pulseData} height={180} width={SCREEN_WIDTH - 80} initialSpacing={20} spacing={40} thickness={3}
                 color="#4CAF50" dataPointsColor="#4CAF50" textShiftY={-2} textShiftX={-5} textFontSize={11}
@@ -244,7 +244,7 @@ export default function GraphScreen() {
       if (!hasData) return <EmptyView />;
       return (
         <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>血糖値 <Text style={styles.chartTitleSub}>(mg/dL)</Text></Text>
+          <Text style={styles.chartTitle}>糖質管理 <Text style={styles.chartTitleSub}>(mg/dL)</Text></Text>
           <LineChart
             data={sugarDataBefore} data2={sugarDataAfter} height={220} width={SCREEN_WIDTH - 80} initialSpacing={20} spacing={40} thickness={3}
             color1="#2196f3" color2="#e91e63" dataPointsColor1="#2196f3" dataPointsColor2="#e91e63" textShiftY={-2} textShiftX={-10} textFontSize={11}
@@ -306,9 +306,9 @@ export default function GraphScreen() {
       <View style={styles.tabContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
           {renderTab('condition', '体調')}
-          {renderTab('bp', '血圧・脈拍')}
+          {renderTab('bp', 'バイタル')}
           {renderTab('weight', '体重')}
-          {renderTab('sugar', '血糖値')}
+          {renderTab('sugar', '糖質管理')}
           {renderTab('temp', '体温')}
         </ScrollView>
       </View>

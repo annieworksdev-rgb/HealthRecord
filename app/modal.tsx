@@ -147,6 +147,7 @@ export default function ModalSettingsScreen() {
             <TouchableOpacity
               style={{ marginTop: 5, padding: 5, alignItems: 'center' }}
               onPress={() => {
+                // ★修正: URLは変えられないとしても、表示名だけでも安全に
                 Linking.openURL('https://sites.google.com/view/annie-works-policy/products/%E6%9C%8D%E8%96%AC%E8%A8%98%E9%8C%B2%E3%83%97%E3%83%A9%E3%82%A4%E3%83%90%E3%82%B7%E3%83%BC%E3%83%9D%E3%83%AA%E3%82%B7%E3%83%BC');
               }}
             >

@@ -24,16 +24,16 @@ const ItemWrapper = ({
     <View style={[indexStyles.itemBase, bgStyle]}>
       <View style={indexStyles.itemContent}>
         {/* 左側のアイコンエリア */}
-        <View style={{ marginRight: 12, alignItems: 'center', width: 30 }}>
+        <View style={{ marginRight: 12, alignItems: 'center', width: 40 }}>
             <MaterialCommunityIcons name={iconName} size={24} color={iconColor} />
-            <Text style={{ fontSize: 10, color: iconColor, marginTop: 2, fontWeight: 'bold' }}>{label}</Text>
+            {/* ★修正: ラベル文字サイズを少し調整 */}
+            <Text style={{ fontSize: 9, color: iconColor, marginTop: 2, fontWeight: 'bold' }}>{label}</Text>
         </View>
         
         {/* メインエリア */}
         <View style={{ flex: 1 }}>
             <Text style={indexStyles.itemTime}>{formatTime(time, timeFormat)}</Text>
             
-            {/* ▼▼▼ 修正: アイコンもテキストも、あるものは両方表示する ▼▼▼ */}
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {children}
 
@@ -55,8 +55,9 @@ const ItemWrapper = ({
 );
 
 export const HealthLogItem = ({ log, timeFormat, onDelete }: { log: HealthLog; timeFormat: TimeFormat; onDelete: (id: string) => void }) => {
-  const symptomsPreview = log.symptoms.length > 0 ? log.symptoms.slice(0, 3).join(', ') + (log.symptoms.length > 3 ? ' ...' : '') : '症状なし';
-  const contentText = log.notes ? `📝 ${symptomsPreview}` : symptomsPreview;
+  // ★修正: 症状 → メモ/タグ
+  const symptomsPreview = log.symptoms.length > 0 ? log.symptoms.slice(0, 3).join(', ') + (log.symptoms.length > 3 ? ' ...' : '') : '';
+  const contentText = log.notes ? `📝 ${log.notes} ${symptomsPreview}` : symptomsPreview || '記録あり';
   const conditionIcon = CONDITION_ICONS.find((c) => c.value === log.conditionRating);
 
   return (
@@ -88,7 +89,7 @@ export const MedicationLogItem = ({ log, timeFormat, onDelete }: { log: Medicati
       bgStyle={indexStyles.bgMedication}
       iconName="pill"
       iconColor="#2196f3"
-      label="服薬"
+      label="サプリ" /* ★修正: 服薬 → サプリ */
       time={log.time}
       timeFormat={timeFormat}
       details={details}
@@ -97,35 +98,32 @@ export const MedicationLogItem = ({ log, timeFormat, onDelete }: { log: Medicati
 };
 
 export const VisitLogItem = ({ log, timeFormat, onDelete }: { log: VisitLog; timeFormat: TimeFormat; onDelete: (id: string) => void }) => {
-  const medicationText = log.hasMedication ? '投薬:あり' : '投薬:なし';
-  const hospitalDisplay = log.notes ? `📝 ${log.hospitalName || '病院名なし'}` : log.hospitalName || '病院名なし';
+  // ★修正: 投薬 → アイテム
+  const medicationText = log.hasMedication ? 'アイテム:あり' : '';
+  // ★修正: 病院 → 施設
+  const hospitalDisplay = log.hospitalName || '施設名なし';
   const hasImages = log.imageUris && log.imageUris.length > 0;
+  
   return (
     <ItemWrapper
       onPress={() => router.push({ pathname: '/visit-log', params: { id: log.id } })}
       onDelete={() => onDelete(log.id)}
       bgStyle={indexStyles.bgVisit}
-      iconName="hospital-building"
+      iconName="office-building-marker" /* ★修正: 病院アイコンを変更 */
       iconColor="#d84315"
-      label="通院"
+      label="メンテ" /* ★修正: 通院 → メンテ */
       time={log.time}
       timeFormat={timeFormat}
-      // detailsプロパティは使わず、すべてchildrenの中に1行で書きます
     >
-      {/* 1行にまとめるレイアウト */}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        
-        {/* 病院名 (長すぎたら省略されるように flex: 1 をつける) */}
         <Text style={[indexStyles.itemDetails, { flexShrink: 1, marginRight: 8 }]} numberOfLines={1}>
           {hospitalDisplay}
         </Text>
-
-        {/* 投薬情報 (少し小さく、薄くする) */}
-        <Text style={{ fontSize: 12, color: '#666', marginRight: 6 }}>
-          {medicationText}
-        </Text>
-
-        {/* 写真がある場合のみアイコンを表示 (文字なし) */}
+        {medicationText ? (
+          <Text style={{ fontSize: 10, color: '#666', marginRight: 6, backgroundColor:'#eee', paddingHorizontal:4, borderRadius:4 }}>
+            {medicationText}
+          </Text>
+        ) : null}
         {hasImages && (
           <Ionicons name="image" size={16} color="#007AFF" />
         )}
@@ -135,32 +133,33 @@ export const VisitLogItem = ({ log, timeFormat, onDelete }: { log: VisitLog; tim
 };
 
 export const BloodPressureLogItem = ({ log, timeFormat, onDelete }: { log: BloodPressureLog; timeFormat: TimeFormat; onDelete: (id: string) => void }) => {
-  const bp = log.systolic && log.diastolic ? `${log.systolic}/${log.diastolic} mmHg` : '';
-  const hr = log.restingHeartRate ? `${log.restingHeartRate} bpm` : '';
-  let detailsText = '未記録';
-  if (bp && hr) detailsText = `血圧: ${bp}  脈拍: ${hr}`;
-  else if (bp) detailsText = `血圧: ${bp}`;
-  else if (hr) detailsText = `脈拍: ${hr}`;
-  if (log.notes) detailsText = `📝 ${detailsText}`;
+  const bp = log.systolic && log.diastolic ? `BP: ${log.systolic}/${log.diastolic}` : '';
+  const hr = log.restingHeartRate ? `HR: ${log.restingHeartRate}` : '';
+  let detailsText = '';
+  if (bp && hr) detailsText = `${bp}  ${hr}`;
+  else if (bp) detailsText = bp;
+  else if (hr) detailsText = hr;
+  
+  if (log.notes) detailsText += `  📝`;
 
   return (
     <ItemWrapper
       onPress={() => router.push({ pathname: '/blood-pressure-log', params: { id: log.id } })}
       onDelete={() => onDelete(log.id)}
       bgStyle={indexStyles.bgMeasurement}
-      iconName="heart-pulse" // 血圧脈拍なのでこれ
+      iconName="heart-pulse"
       iconColor="#4caf50"
-      label="血圧"
+      label="バイタル" /* ★修正: 血圧 → バイタル */
       time={log.time}
       timeFormat={timeFormat}
-      details={detailsText}
+      details={detailsText || '記録あり'}
     />
   );
 };
 
 export const WeightLogItem = ({ log, timeFormat, onDelete }: { log: WeightLog; timeFormat: TimeFormat; onDelete: (id: string) => void }) => {
   let details = `${log.weight} kg`;
-  if (log.notes) details = `📝 ${details}`;
+  if (log.notes) details += `  📝`;
   return (
     <ItemWrapper
       onPress={() => router.push({ pathname: '/weight-log', params: { id: log.id } })}
@@ -177,9 +176,9 @@ export const WeightLogItem = ({ log, timeFormat, onDelete }: { log: WeightLog; t
 };
 
 export const BloodSugarLogItem = ({ log, timeFormat, onDelete }: { log: BloodSugarLog; timeFormat: TimeFormat; onDelete: (id: string) => void }) => {
-  const timingLabel = log.timing === 'before' ? '食前' : log.timing === 'after' ? '食後' : 'その他';
-  let details = `${timingLabel}: ${log.value} mg/dL`;
-  if (log.notes) details = `📝 ${details}`;
+  const timingLabel = log.timing === 'before' ? '食前' : log.timing === 'after' ? '食後' : '他';
+  let details = `${timingLabel}: ${log.value}`;
+  if (log.notes) details += `  📝`;
   return (
     <ItemWrapper
       onPress={() => router.push({ pathname: '/blood-sugar-log', params: { id: log.id } })}
@@ -187,7 +186,7 @@ export const BloodSugarLogItem = ({ log, timeFormat, onDelete }: { log: BloodSug
       bgStyle={indexStyles.bgMeasurement}
       iconName="water"
       iconColor="#4caf50"
-      label="血糖"
+      label="糖質" /* ★修正: 血糖 → 糖質 */
       time={log.time}
       timeFormat={timeFormat}
       details={details}
@@ -197,7 +196,7 @@ export const BloodSugarLogItem = ({ log, timeFormat, onDelete }: { log: BloodSug
 
 export const TemperatureLogItem = ({ log, timeFormat, onDelete }: { log: TemperatureLog; timeFormat: TimeFormat; onDelete: (id: string) => void }) => {
   let details = `${log.value} ℃`;
-  if (log.notes) details = `📝 ${details}`;
+  if (log.notes) details += `  📝`;
   return (
     <ItemWrapper
       onPress={() => router.push({ pathname: '/temperature-log', params: { id: log.id } })}
@@ -214,24 +213,25 @@ export const TemperatureLogItem = ({ log, timeFormat, onDelete }: { log: Tempera
 };
 
 export const AlarmItem = ({ alarm, timeFormat, onDelete }: { alarm: Alarm; timeFormat: TimeFormat; onDelete: (id: string) => void }) => {
-  // アラームは構造が少し違うので独自実装のままアイコン化
-  const label = alarm.medicationName
+  // ★修正: アラームのタイトルも加工して表示
+  let label = alarm.title || '予約';
+  if (label.includes('服薬')) label = label.replace('服薬', 'サプリ');
+  if (label.includes('通院')) label = label.replace('通院', 'メンテ');
+
+  const info = alarm.medicationName
     ? `${alarm.medicationName} (${alarm.medicationAmount}${alarm.medicationUnit})`
-    : alarm.detail
-      ? `${alarm.title}: ${alarm.detail}`
-      : alarm.title || '予約';
+    : alarm.detail || '';
 
   const isWeekly = alarm.days && alarm.days.length > 0;
   
-  // 遷移先判定ロジック
   const getTargetScreen = (title?: string) => {
     if (!title) return null;
     if (title.includes('体調')) return '/health-log';
-    if (title.includes('服薬')) return '/medication-log';
-    if (title.includes('通院')) return '/visit-log';
-    if (title.includes('血圧') || title.includes('脈拍')) return '/blood-pressure-log';
+    if (title.includes('サプリ') || title.includes('服薬')) return '/medication-log';
+    if (title.includes('メンテ') || title.includes('通院')) return '/visit-log';
+    if (title.includes('バイタル') || title.includes('BP') || title.includes('血圧')) return '/blood-pressure-log';
     if (title.includes('体重')) return '/weight-log';
-    if (title.includes('血糖')) return '/blood-sugar-log';
+    if (title.includes('糖質') || title.includes('血糖')) return '/blood-sugar-log';
     if (title.includes('体温')) return '/temperature-log';
     return null;
   };
@@ -271,23 +271,25 @@ export const AlarmItem = ({ alarm, timeFormat, onDelete }: { alarm: Alarm; timeF
     });
   };
 
-  // AlarmItemは「編集ボタン」を含むため独自レイアウトを使用 (ItemWrapperは使わない)
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={0.7}>
       <View style={[indexStyles.itemBase, indexStyles.bgAlarm]}>
         <View style={indexStyles.itemContent}>
-          <View style={{ marginRight: 12, alignItems: 'center', width: 30 }}>
+          <View style={{ marginRight: 12, alignItems: 'center', width: 40 }}>
             <MaterialCommunityIcons name={isWeekly ? "calendar-sync" : "calendar-clock"} size={24} color="#666" />
-            <Text style={{ fontSize: 10, color: "#666", marginTop: 2, fontWeight: 'bold' }}>予約</Text>
+            <Text style={{ fontSize: 9, color: "#666", marginTop: 2, fontWeight: 'bold' }}>予約</Text>
           </View>
 
           <View style={{ flex: 1 }}>
             <Text style={indexStyles.itemTime}>{formatTime(alarm.time, timeFormat)}</Text>
-            <Text style={indexStyles.itemDetails} numberOfLines={1}>{label}</Text>
+            <View style={{ flexDirection:'row', alignItems:'center' }}>
+                <Text style={[indexStyles.itemDetails, {fontWeight:'bold', marginRight:8}]} numberOfLines={1}>{label}</Text>
+                <Text style={indexStyles.itemDetails} numberOfLines={1}>{info}</Text>
+            </View>
           </View>
         </View>
         <TouchableOpacity onPress={handleEdit} style={[indexStyles.deleteButton, { backgroundColor: '#007AFF', marginRight: 8 }]}>
-          <Text style={indexStyles.deleteButtonText}>編</Text>
+          <Ionicons name="create-outline" size={18} color="white" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => onDelete(alarm.id)} style={indexStyles.deleteButton}>
           <Text style={indexStyles.deleteButtonText}>×</Text>

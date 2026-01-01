@@ -42,8 +42,9 @@ const REPEAT_LABELS: Record<RepeatPattern, string> = {
   fourweekly: '4週間おき',
 };
 
+// ★修正: 医療的な単位（注射、吸入など）を削除しました
 const UNIT_OPTIONS = [
-  '錠剤', '個', '分量', '包', '滴', 'g', 'mg', 'mm', 'ml', 'μg', 'IU', 'カプセル', '吸入', '回の塗布', '注射', '塗り薬',
+  '錠剤', '個', '分量', '包', '滴', 'g', 'mg', 'mm', 'ml', 'μg', 'IU', 'カプセル', '回', 'セット'
 ];
 
 const formatTime = (date: Date, format: TimeFormat) => {
@@ -110,9 +111,10 @@ export default function ReservationSettingsScreen() {
     }
   }, [id, alarms, navigation]);
 
-  const needsDetail = currentLabel.includes('服薬') || currentLabel.includes('通院');
-  const isMedication = currentLabel.includes('服薬');
-  const placeholderText = isMedication ? '薬の名前 (例: 頭痛薬)' : '病院名 (例: 〇〇クリニック)';
+  // ★修正: 「サプリ摂取」だけでなく「サプリ」を含む場合も判定するように変更（名前を変えても動くように）
+  const needsDetail = currentLabel.includes('サプリ') || currentLabel.includes('メンテナンス');
+  const isMedication = currentLabel.includes('サプリ');
+  const placeholderText = isMedication ? 'サプリの名前 (例: ビタミン)' : 'メンテナンス記録 (例: 〇〇センター)';
   
   const showDateRow = repeatPattern !== 'daily' && repeatPattern !== 'weekly';
 
@@ -191,9 +193,7 @@ export default function ReservationSettingsScreen() {
       }
 
       // B. 曜日指定（Weekly）の特例処理
-      // ※Weeklyは「日付」ではなく「曜日」に依存するため、過去チェックとは別にループで未来を探す
       if (repeatPattern === 'weekly' && selectedDays.length > 0) {
-        // 未来、かつ指定した曜日に当たるまで日付を進め続ける
         while (finalTargetDate <= now || !selectedDays.includes(finalTargetDate.getDay())) {
           finalTargetDate.setDate(finalTargetDate.getDate() + 1);
         }
@@ -270,7 +270,6 @@ export default function ReservationSettingsScreen() {
     <View style={styles.screenContainer}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      {/* 1. ヘッダー (固定) */}
       <View style={{ backgroundColor: '#fff', paddingTop: insets.top, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
         <View style={{ height: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <TouchableOpacity onPress={() => router.back()} style={{ position: 'absolute', left: 0, paddingHorizontal: 16, height: '100%', justifyContent: 'center' }}>
@@ -280,7 +279,6 @@ export default function ReservationSettingsScreen() {
         </View>
       </View>
 
-      {/* 2. スクロール領域 (入力フォームとボタン) */}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 20 }}>
         
         <View style={styles.headerContainer}>
@@ -350,8 +348,9 @@ export default function ReservationSettingsScreen() {
         {isMedication ? (
           <>
             <View style={styles.inputRow}>
-              <Text style={styles.label}>薬の名前</Text>
-              <TextInput style={styles.textInput} value={medName} onChangeText={setMedName} placeholder="例: 頭痛薬" />
+              {/* サプリの名前に変更 */}
+              <Text style={styles.label}>サプリの名前</Text>
+              <TextInput style={styles.textInput} value={medName} onChangeText={setMedName} placeholder="例: ビタミン" />
             </View>
             <View style={styles.inputRow}>
               <Text style={styles.label}>個数/分量</Text>
@@ -366,7 +365,8 @@ export default function ReservationSettingsScreen() {
           </>
         ) : needsDetail ? (
           <View style={styles.inputRow}>
-            <Text style={styles.label}>詳細 ({currentLabel.includes('服薬') ? '薬名' : '病院名'})</Text>
+            {/* 条件表示も修正 */}
+            <Text style={styles.label}>詳細 ({currentLabel.includes('サプリ') ? 'サプリ名' : '施設名'})</Text>
             <TextInput style={styles.textInput} value={detail} onChangeText={setDetail} placeholder={placeholderText} />
           </View>
         ) : null}
@@ -396,7 +396,6 @@ export default function ReservationSettingsScreen() {
         </View>
       </ScrollView>
 
-      {/* 3. 広告エリア */}
       {!isPro && !IS_SCREENSHOT_MODE && (
         <View style={{ 
               alignItems: 'center', 

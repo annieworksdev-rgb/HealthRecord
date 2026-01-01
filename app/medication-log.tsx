@@ -1,15 +1,15 @@
 import * as Haptics from 'expo-haptics';
-import { Ionicons } from '@expo/vector-icons'; // ★追加
-import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router'; // ★Stack追加
+import { Ionicons } from '@expo/vector-icons';
+import { Stack, router, useLocalSearchParams, useNavigation } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // ★変更
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { DateSelectRow, SaveArea, TimeSelectRow } from '../components/LogScreenParts';
 import { useAlarms } from '../context/AlarmContext';
 import { useMedicationLogs } from '../context/MedicationLogContext';
 import { commonStyles } from '../styles/common';
-import { formatTime, UNIT_OPTIONS } from '../utils/shared';
+import { formatTime } from '../utils/shared'; // UNIT_OPTIONSのインポートを削除
 import { useRef } from 'react';
 import { IS_SCREENSHOT_MODE } from '../utils/shared';
 import { usePurchase } from '../context/PurchaseContext';
@@ -19,6 +19,11 @@ import {
   TestIds, 
   useInterstitialAd 
 } from 'react-native-google-mobile-ads';
+
+// ★修正: ここで安全な単位リストを定義して上書きする
+const SAFE_UNIT_OPTIONS = [
+  '錠剤', '個', '分量', '包', '滴', 'g', 'mg', 'mm', 'ml', 'μg', 'IU', 'カプセル'
+];
 
 export default function MedicationLogScreen() {
   const insets = useSafeAreaInsets();
@@ -45,7 +50,7 @@ export default function MedicationLogScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const headerTitle = id ? '記録を編集' : '服薬の記録';
+  const headerTitle = id ? '記録を編集' : 'サプリ摂取の記録';
   const { isPro, toggleProStatusDebug } = usePurchase();
 
   useEffect(() => {
@@ -69,7 +74,7 @@ export default function MedicationLogScreen() {
   const handleSaveLog = async () => {
     if (!drugName.trim()) { 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('エラー', '薬の名前を入力してください。'); 
+      Alert.alert('エラー', 'サプリの名前を入力してください。'); 
       return; 
     }
     if (!amount.trim()) { 
@@ -106,7 +111,7 @@ export default function MedicationLogScreen() {
       else {
         const snoozeTime = new Date(Date.now() + 30 * 60 * 1000);
         const medData = drugName ? { name: drugName, amount: amount, unit: unit } : undefined;
-        await addAlarm(snoozeTime, '服薬の記録', '', 'none', undefined, medData);
+        await addAlarm(snoozeTime, 'サプリ摂取の記録', '', 'none', undefined, medData);
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Toast.show({ type: 'info', text1: 'スヌーズ設定', text2: '30分後に通知します' });
@@ -155,8 +160,8 @@ export default function MedicationLogScreen() {
             <TimeSelectRow time={time} timeString={formatTime(time, 'h24')} showPicker={showTimePicker} onPress={() => setShowTimePicker(true)} onChange={(e, t) => { setShowTimePicker(false); if(t) setTime(t); }} onClose={() => setShowTimePicker(false)} />
 
             <View style={commonStyles.inputRow}>
-              <Text style={commonStyles.label}>薬の名前</Text>
-              <TextInput style={commonStyles.textInput} value={drugName} onChangeText={setDrugName} placeholder="例: 頭痛薬" />
+              <Text style={commonStyles.label}>サプリの名前</Text>
+              <TextInput style={commonStyles.textInput} value={drugName} onChangeText={setDrugName} placeholder="例: ビタミン" />
             </View>
 
             <View style={commonStyles.inputRow}>
@@ -182,7 +187,8 @@ export default function MedicationLogScreen() {
                 <View style={styles.unitModalContent}>
                   <Text style={styles.unitModalTitle}>単位を選択</Text>
                   <ScrollView style={styles.unitList}>
-                    {UNIT_OPTIONS.map((opt) => (
+                    {/* ★修正: ここでSAFE_UNIT_OPTIONSを使う */}
+                    {SAFE_UNIT_OPTIONS.map((opt) => (
                       <TouchableOpacity key={opt} style={[styles.unitOption, opt === unit && styles.selectedUnitOption]} onPress={() => { Haptics.selectionAsync(); setUnit(opt); setShowUnitModal(false); }}>
                         <Text style={[styles.unitOptionText, opt === unit && styles.selectedUnitOptionText]}>{opt}</Text>
                       </TouchableOpacity>
